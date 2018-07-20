@@ -1,0 +1,33 @@
+{
+  "name": "@cloudnative/health",
+  "version": "0.0.1",
+  "description": "Utility module for building Health Check endpoints",
+  "main": "index.js",
+  "scripts": {
+    "build": "tsc",
+    "test": "tsc && nyc --reporter=html mocha --timeout 30000 \"./test/*/*.test.js\"",
+    "coveralls": "nyc report --reporter=text-lcov | coveralls",
+    "mocha": "node bin/run-mocha --timeout 30000 \"./test/*/*.js\""
+  },
+  "keywords": [
+    "health",
+    "cloud",
+    "kubernetes",
+    "checkcheck",
+    "liveness",
+    "LTS"
+  ],
+  "author": "Chris Bailey",
+  "license": "Apache-2.0",
+  "repository": "CloudNativeJS/cloud-health",
+  "homepage": "http://CloudNativeJS.io/",
+  "devDependencies": {
+    "typescript": "^2.8.3",
+    "@types/chai": "^4.0.5",
+    "@types/mocha": "^2.2.44",
+    "@types/node": "^6.0.0",
+    "chai": "^4.1.2",
+    "nyc": "^12.0.2",
+    "mocha": "^4.0.1"
+  }
+}
