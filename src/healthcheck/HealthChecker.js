@@ -1,6 +1,4 @@
 "use strict";
-//import { WSAEDQUOT } from "constants";
-Object.defineProperty(exports, "__esModule", { value: true });
 /*
  * Copyright IBM Corporation 2018
  *
@@ -16,8 +14,10 @@ Object.defineProperty(exports, "__esModule", { value: true });
  * See the License for the specific language governing permissions and
  * limitations under the License.
  */
+Object.defineProperty(exports, "__esModule", { value: true });
 var State;
 (function (State) {
+    State["UNKNOWN"] = "UNKNOWN";
     State["STARTING"] = "STARTING";
     State["UP"] = "UP";
     State["DOWN"] = "DOWN";
@@ -32,9 +32,10 @@ class HealthStatus {
     }
     addStatus(status) {
         this.checks.push(status);
-        if (this.status === State.STARTING) {
-            if (status.state === State.UP)
-                this.status = State.UP;
+        if (this.status === State.UNKNOWN) {
+            this.status = status.state;
+        }
+        else if (this.status === State.STARTING) {
             if (status.state === State.STARTING)
                 this.status = State.STARTING;
             if (status.state === State.DOWN)
@@ -117,10 +118,9 @@ class HealthChecker {
         }
         // Handle startup case
         if (this.startupComplete === false) {
-            statusResponse = new HealthStatus(State.STARTING);
+            statusResponse = new HealthStatus(State.UNKNOWN);
             for (let check in this.readinessPlugins) {
-                var state = this.readinessPlugins[check].getStatus()
-                statusResponse.addStatus(state);
+                statusResponse.addStatus(this.readinessPlugins[check].getStatus());
             }
             if (statusResponse.status !== State.UP) {
                 return Promise.resolve(statusResponse);

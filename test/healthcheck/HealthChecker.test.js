@@ -1,4 +1,19 @@
 "use strict";
+/*
+ * Copyright IBM Corporation 2018
+ *
+ * Licensed under the Apache License, Version 2.0 (the "License");
+ * you may not use this file except in compliance with the License.
+ * You may obtain a copy of the License at
+ *
+ * http://www.apache.org/licenses/LICENSE-2.0
+ *
+ * Unless required by applicable law or agreed to in writing, software
+ * distributed under the License is distributed on an "AS IS" BASIS,
+ * WITHOUT WARRANTIES OR CONDITIONS OF ANY KIND, either express or implied.
+ * See the License for the specific language governing permissions and
+ * limitations under the License.
+ */
 Object.defineProperty(exports, "__esModule", { value: true });
 const chai_1 = require("chai");
 const index_1 = require("../../index");
@@ -30,6 +45,28 @@ describe('Health Checker test suite', function () {
             return healthcheck.getStatus().then((status) => {
                 const result = status.status;
                 chai_1.expect(result).to.equal(index_1.State.UP, `Should return: ${index_1.State.UP} , but returned: ${result}`);
+            });
+        });
+    });
+    it('Startup reports STARTING when one check is up and the other is starting', function () {
+        let healthcheck = new index_1.HealthChecker();
+        const Check1 = new Promise(function (resolve, _reject) {
+            setTimeout(() => {
+                process.kill(process.pid, 'SIGTERM');
+            }, 1000);
+        });
+        let check1 = new index_1.ReadinessCheck('Check1', Check1);
+        healthcheck.registerReadinessCheck(check1);
+        const Check2 = new Promise(function (resolve, _reject) {
+            resolve();
+        });
+        let check2 = new index_1.ReadinessCheck('Check2', Check2);
+        healthcheck.registerReadinessCheck(check2)
+            .then(() => {
+            return healthcheck.getStatus().then((status) => {
+                const result = JSON.stringify(status);
+                let expected = "{\"status\":\"STARTING\",\"checks\":[{\"name\":\"Check1\",\"state\":\"STARTING\",\"data\":{\"reason\":\"\"}},{\"name\":\"Check2\",\"state\":\"UP\",\"data\":{\"reason\":\"\"}}]}";
+                chai_1.expect(result).to.equal(expected, `Should return: ${expected}, but returned: ${result}`);
             });
         });
     });

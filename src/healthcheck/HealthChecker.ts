@@ -15,6 +15,7 @@
  */
 
 enum State {
+  UNKNOWN = "UNKNOWN",
   STARTING = "STARTING",
   UP = "UP",
   DOWN = "DOWN",
@@ -31,23 +32,25 @@ class HealthStatus {
     this.checks = [];
   }
 
-  public addStatus(status: PluginStatus){
+  public addStatus(status: PluginStatus) {
     this.checks.push(status)
-    if (this.status === State.STARTING) {
-      if (status.state === State.UP) this.status = State.UP;
+    if (this.status === State.UNKNOWN) {
+      this.status = status.state
+    }
+    else if (this.status === State.STARTING) {
       if (status.state === State.STARTING) this.status = State.STARTING;
       if (status.state === State.DOWN) this.status = State.DOWN;
       return;
-    } 
+    }
     else if (this.status === State.UP) {
       if (status.state === State.STARTING) this.status = State.STARTING;
       if (status.state === State.UP) this.status = State.UP;
       if (status.state === State.DOWN) this.status = State.DOWN;
       return;
-    } 
+    }
     else if (this.status === State.DOWN) {
       return;
-    } 
+    }
     else if (this.status === State.STOPPING) {
       if (status.state === State.STOPPING) this.status = State.STOPPING;
       if (status.state === State.DOWN) this.status = State.STOPPED;
@@ -58,7 +61,7 @@ class HealthStatus {
       if (status.state === State.STOPPING) this.status = State.STOPPING;
       if (status.state === State.DOWN) this.status = State.STOPPED;
       return;
-    } 
+    }
   }
 }
 
@@ -109,7 +112,7 @@ class HealthChecker {
     this.shutdownPlugins.push(plugin);
   }
 
-  public getStatus() : Promise<HealthStatus> {
+  public getStatus(): Promise<HealthStatus> {
     let statusResponse: HealthStatus;
 
     // Handle shutdown case
@@ -123,7 +126,7 @@ class HealthChecker {
 
     // Handle startup case
     if (this.startupComplete === false) {
-      statusResponse = new HealthStatus(State.STARTING)
+      statusResponse = new HealthStatus(State.UNKNOWN)
       for (let check in this.readinessPlugins) {
         statusResponse.addStatus(this.readinessPlugins[check].getStatus())
       }
@@ -142,14 +145,18 @@ class HealthChecker {
       return Promise.resolve(statusResponse)
     } else if (filteredPromises.length === 1) {
       return filteredPromises[0].runCheck()
-      .then(() => {statusResponse.addStatus(filteredPromises[0].getStatus());
-                  return statusResponse})
+        .then(() => {
+          statusResponse.addStatus(filteredPromises[0].getStatus());
+          return statusResponse
+})
     } else {
       return Promise.all(filteredPromises)
-      .then(() => { filteredPromises.forEach((promise) => {
-                      statusResponse.addStatus(promise.getStatus())
-                    });
-                    return statusResponse})
+        .then(() => {
+          filteredPromises.forEach((promise) => {
+            statusResponse.addStatus(promise.getStatus())
+          });
+          return statusResponse
+        })
     }
   }
 }
@@ -171,12 +178,15 @@ class Plugin {
   public wrapPromise(promise: Promise<null>, success: State, failure: State) {
     let wrappedPromise = new Promise<null>((resolve, reject) => {
       Promise.resolve(promise)
-      .then(() =>  {this.status = success;
-                    resolve()})
-      .catch((error) => {
-                    this.status = failure;
-                   this.statusReason = error.message;
-                   resolve();})
+        .then(() => {
+        this.status = success;
+          resolve()
+        })
+        .catch((error) => {
+          this.status = failure;
+          this.statusReason = error.message;
+          resolve();
+        })
     })
     return wrappedPromise;
   }
@@ -222,12 +232,12 @@ class ShutdownCheck extends Plugin {
 class PluginStatus {
   name: string;
   state: State;
-  data: { [key: string] : string; };
+  data: { [key: string]: string; };
 
   constructor(name: string, state: State, reason: string) {
     this.name = name;
     this.state = state;
-    this.data = {"reason": reason};
+    this.data = { "reason": reason };
   }
 }
 
