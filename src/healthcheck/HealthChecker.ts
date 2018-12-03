@@ -20,7 +20,7 @@ enum State {
   UP = "UP",
   DOWN = "DOWN",
   STOPPING = "STOPPING",
-  STOPPED = "STOPPED"
+  STOPPED = "STOPPED",
 }
 
 class HealthStatus {

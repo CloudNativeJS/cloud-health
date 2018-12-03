@@ -48,7 +48,7 @@ describe('Health Checker test suite', function () {
             });
         });
     });
-    it('Startup reports STARTING when one check is up and the other is starting', function () {
+    it('Startup reports STARTING when first is starting and second is up', function () {
         let healthcheck = new index_1.HealthChecker();
         const Check1 = new Promise(function (resolve, _reject) {
             setTimeout(() => {
@@ -66,6 +66,28 @@ describe('Health Checker test suite', function () {
             return healthcheck.getStatus().then((status) => {
                 const result = JSON.stringify(status);
                 let expected = "{\"status\":\"STARTING\",\"checks\":[{\"name\":\"Check1\",\"state\":\"STARTING\",\"data\":{\"reason\":\"\"}},{\"name\":\"Check2\",\"state\":\"UP\",\"data\":{\"reason\":\"\"}}]}";
+                chai_1.expect(result).to.equal(expected, `Should return: ${expected}, but returned: ${result}`);
+            });
+        });
+    });
+    it('Startup reports STARTING when first is up and the second is starting', function () {
+        let healthcheck = new index_1.HealthChecker();
+        const Check1 = new Promise(function (resolve, _reject) {
+            resolve();
+        });
+        let check1 = new index_1.ReadinessCheck('Check1', Check1);
+        healthcheck.registerReadinessCheck(check1)
+            .then(() => {
+            const Check2 = new Promise(function (resolve, _reject) {
+                setTimeout(() => {
+                    process.kill(process.pid, 'SIGTERM');
+                }, 1000);
+            });
+            let check2 = new index_1.ReadinessCheck('Check2', Check2);
+            healthcheck.registerReadinessCheck(check2);
+            return healthcheck.getStatus().then((status) => {
+                const result = JSON.stringify(status);
+                let expected = "{\"status\":\"STARTING\",\"checks\":[{\"name\":\"Check1\",\"state\":\"UP\",\"data\":{\"reason\":\"\"}},{\"name\":\"Check2\",\"state\":\"STARTING\",\"data\":{\"reason\":\"\"}}]}";
                 chai_1.expect(result).to.equal(expected, `Should return: ${expected}, but returned: ${result}`);
             });
         });
@@ -100,6 +122,29 @@ describe('Health Checker test suite', function () {
                 const result = status.status;
                 chai_1.expect(result).to.equal(index_1.State.STARTING, `Should return: ${index_1.State.STARTING} , but returned: ${result}`);
             });
+        });
+    });
+    it('Startup reports STARTING when multiple checks are still starting', function () {
+        let healthcheck = new index_1.HealthChecker();
+        const promise1 = new Promise(function (_resolve, _reject) {
+            // tslint:disable-next-line:no-unused-expression no-shadowed-variable
+            new Promise(function (resolve, _reject) {
+                setTimeout(resolve, 100, 'foo');
+            });
+        });
+        let check1 = new index_1.ReadinessCheck("check", promise1);
+        const promise2 = new Promise(function (_resolve, _reject) {
+            // tslint:disable-next-line:no-unused-expression no-shadowed-variable
+            new Promise(function (resolve, _reject) {
+                setTimeout(resolve, 100, 'foo');
+            });
+        });
+        let check2 = new index_1.ReadinessCheck("check", promise2);
+        healthcheck.registerReadinessCheck(check1);
+        healthcheck.registerReadinessCheck(check2);
+        return healthcheck.getStatus().then((status) => {
+            const result = status.status;
+            chai_1.expect(result).to.equal(index_1.State.STARTING, `Should return: ${index_1.State.STARTING} , but returned: ${result}`);
         });
     });
     it('Health reports UP by default', function () {
