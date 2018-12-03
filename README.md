@@ -26,7 +26,7 @@ Cloud Health allows you to register promises which are executed during the three
  Promises that are created as part of a `ReadinessCheck` and registered using `registerReadinessCheck` are executed at startup and can be used to execute any code that must complete before your application is ready. If the startup promises are still running, calls to `getStatus()` return `STARTING`. Once the promises complete, `DOWN` is reported if there were any failures, or the "liveness" promises are then executed.
   
 2. At runtimes for "liveness"  
- Promises that are created as part of a `LivenessCheck` and registered using `registerReadinessCheck` are executed on calls to `getStatus()`. These can be used to ensure that the application is still running correctly. If no promises are registered, or the complete successfully, `UP` is reported. If there are any failures, `DOWN` is reported.
+ Promises that are created as part of a `LivenessCheck` and registered using `registerLivenessCheck` are executed on calls to `getStatus()`. These can be used to ensure that the application is still running correctly. If no promises are registered, or the complete successfully, `UP` is reported. If there are any failures, `DOWN` is reported.
  
 3. On a `SIGTERM` signal for shutdown  
  Promises that are created as part of a `ShutdownCheck` and registered using `registerShutdownCheck` are executed when the process receives a `SIGTERM` making it possible to clean up any resources used by the application. If the shutdown promises are still running, calls to `getStatus()` return `STOPPING`. Once the promises complete, `STOPPED` is reported.
