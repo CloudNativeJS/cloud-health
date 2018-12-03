@@ -1,6 +1,6 @@
 {
   "name": "@cloudnative/health",
-  "version": "1.0.2",
+  "version": "1.0.1",
   "description": "Utility module for building Health Check endpoints",
   "main": "index.js",
   "scripts": {
