@@ -1,4 +1,5 @@
 declare enum State {
+    UNKNOWN = "UNKNOWN",
     STARTING = "STARTING",
     UP = "UP",
     DOWN = "DOWN",
