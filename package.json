@@ -23,7 +23,7 @@
   "homepage": "http://CloudNativeJS.io/",
   "devDependencies": {
     "coveralls": "^3.0.2",
-    "typescript": "^2.8.3",
+    "typescript": "^3.3.4",
     "@types/chai": "^4.0.5",
     "@types/mocha": "^2.2.44",
     "@types/node": "^6.0.0",
