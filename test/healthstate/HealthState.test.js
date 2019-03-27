@@ -25,9 +25,5 @@ describe('Health State test suite', function () {
             chai_1.expect(result).to.equal(state, `Should return: ${state}, but returned: ${result}`);
         });
     }
-    it('UNKNOWN should always be changed', function () {
-        let result = new index_1.HealthStatus(index_1.State.UNKNOWN).status;
-        chai_1.expect(result).to.equal(index_1.State.UNKNOWN, `Should return: ${index_1.State.UNKNOWN}, but returned: ${result}`);
-    });
 });
 //# sourceMappingURL=HealthState.test.js.map
