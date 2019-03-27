@@ -3,8 +3,8 @@
 <a href='http://CloudNativeJS.io/'><img src='https://img.shields.io/badge/homepage-CloudNativeJS-blue.svg'></a>
 <a href="http://travis-ci.org/CloudNativeJS/cloud-health"><img src="https://secure.travis-ci.org/CloudNativeJS/cloud-health.svg?branch=master" alt="Build status"></a>
 <a href='https://coveralls.io/github/CloudNaitveJS/cloud-health?branch=master'><img src='https://coveralls.io/repos/github/CloudNativeJS/cloud-health/badge.svg?branch=master' alt='Coverage Status' /></a>
-<a href='http://github.com/CloudNativeJS/ModuleLTS'><img src='https://img.shields.io/badge/Module%20LTS-Adopted-brightgreen.svg?style=flat' alt='Module LTS Adopted' /></a> 
-<a href='http://ibm.biz/node-support'><img src='https://img.shields.io/badge/IBM%20Support-Frameworks-brightgreen.svg?style=flat' alt='IBM Support' /></a>   
+<a href='http://github.com/CloudNativeJS/ModuleLTS'><img src='https://img.shields.io/badge/Module%20LTS-Adopted-brightgreen.svg?style=flat' alt='Module LTS Adopted' /></a>
+<a href='http://ibm.biz/node-support'><img src='https://img.shields.io/badge/IBM%20Support-Frameworks-brightgreen.svg?style=flat' alt='IBM Support' /></a>
 </p>
 
 A core library to provide application lifecycle handling and liveness checks for Node.js applications.
@@ -22,13 +22,13 @@ for use with Kubernetes and Cloud Foundry based clouds.
 
 Cloud Health allows you to register promises which are executed during the three phases of your application, and allows you to call `getStatus()` to return a promise which resolves to whether the application is `STARTING`, `UP`, `DOWN`, `STOPPING` or `STOPPED`.
 
-1. At startup for "readiness"  
+1. At startup for "readiness"
  Promises that are created as part of a `ReadinessCheck` and registered using `registerReadinessCheck` are executed at startup and can be used to execute any code that must complete before your application is ready. If the startup promises are still running, calls to `getStatus()` return `STARTING`. Once the promises complete, `DOWN` is reported if there were any failures, or the "liveness" promises are then executed.
-  
-2. At runtimes for "liveness"  
+
+2. At runtimes for "liveness"
  Promises that are created as part of a `LivenessCheck` and registered using `registerLivenessCheck` are executed on calls to `getStatus()`. These can be used to ensure that the application is still running correctly. If no promises are registered, or the complete successfully, `UP` is reported. If there are any failures, `DOWN` is reported.
- 
-3. On a `SIGTERM` signal for shutdown  
+
+3. On a `SIGTERM` signal for shutdown
  Promises that are created as part of a `ShutdownCheck` and registered using `registerShutdownCheck` are executed when the process receives a `SIGTERM` making it possible to clean up any resources used by the application. If the shutdown promises are still running, calls to `getStatus()` return `STOPPING`. Once the promises complete, `STOPPED` is reported.
 
 
@@ -50,11 +50,11 @@ Cloud Health allows you to register promises which are executed during the three
   let readyCheck = new health.ReadinessCheck("readyCheck", readyPromise);
   healthcheck.registerReadinessCheck(readyCheck);
   ```
-  Note that `registerReadinessCheck()` also returns a promise which can be used to wait until the promise is resolved.  
-  
+  Note that `registerReadinessCheck()` also returns a promise which can be used to wait until the promise is resolved.
+
 3. Register a livenessCheck promise:
   ```js
-  const livePromise = new Promise(function (resolve, _reject) {
+  const livePromise = () => new Promise(function (resolve, _reject) {
     setTimeout(function () {
       console.log('ALIVE!');
       resolve();
@@ -63,6 +63,8 @@ Cloud Health allows you to register promises which are executed during the three
   let liveCheck = new health.LivenessCheck("liveCheck", livePromise);
   healthcheck.registerLivenessCheck(liveCheck);
   ```
+  Note that `LivenessCheck()` accepts a new promise wrapped in a function which allows for reevaluation of the liveness whenever it is called.
+
 4. Register a shutdownCheck promise:
   ```js
   const shutdownPromise = new Promise(function (resolve, _reject) {
@@ -80,7 +82,7 @@ Cloud Health allows you to register promises which are executed during the three
   .then((result) => console.log('STATUS: ' + JSON.stringify(result)));
   ```
   Note that [Cloud Health Connect](http://github.com/CloudNativeJS/cloud-health-connect) provides a Connect Middleware for use in Express.js, Loopback and other frameworks that exposes the results as an endpoint for us in Cloud Foundry and Kubernetes based clouds.
-  
+
 ### Using Cloud Health with Typescript
 The Cloud Health module is created in TypeScript and as such provides out of the box TypeScript support.
 
@@ -88,9 +90,9 @@ The Cloud Health module is created in TypeScript and as such provides out of the
 
 This module adopts the [Module Long Term Support (LTS)](http://github.com/CloudNativeJS/ModuleLTS) policy, with the following End Of Life (EOL) dates:
 
-| Module Version   | Release Date | Minimum EOL | EOL With     | Status  |
-|------------------|--------------|-------------|--------------|---------|
-| 1.x.x	         | July 2018    | Dec 2019    |              | Current |
+| Module Version | Release Date | Minimum EOL | EOL With | Status  |
+| -------------- | ------------ | ----------- | -------- | ------- |
+| 1.x.x          | July 2018    | Dec 2019    |          | Current |
 
 
 ## License
