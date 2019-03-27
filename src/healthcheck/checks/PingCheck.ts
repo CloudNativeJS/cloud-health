@@ -27,7 +27,7 @@ class PingCheck extends LivenessCheck {
             method: method
         };
 
-        let promise = new Promise<null>(function(resolve, reject) {
+        let promise = () => new Promise<null>(function(resolve, reject) {
             const req = http.request(options, (res) => {
                 
                 res.on("data", function (chunk) {

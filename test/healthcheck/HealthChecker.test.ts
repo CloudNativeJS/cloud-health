@@ -191,7 +191,7 @@ describe('Health Checker test suite', function() {
   it('Health reports UP and check result with single registered check', function() {
     let healthcheck = new HealthChecker();
     // tslint:disable-next-line:no-shadowed-variable
-    const promise = new Promise<null>(function(resolve, _reject) {
+    const promise = () => new Promise<null>(function(resolve, _reject) {
       resolve()
     });
     let check = new LivenessCheck("check", promise)
@@ -207,14 +207,14 @@ describe('Health Checker test suite', function() {
   it('Health reports UP and check result with two registered checks', function() {
     let healthcheck = new HealthChecker();
     // tslint:disable-next-line:no-shadowed-variable
-    const promiseone = new Promise<null>(function(resolve, _reject) {
+    const promiseone = () => new Promise<null>(function(resolve, _reject) {
       resolve()
     });
     let checkone = new LivenessCheck("checkone", promiseone)
     healthcheck.registerLivenessCheck(checkone)
 
     // tslint:disable-next-line:no-shadowed-variable
-    const promisetwo = new Promise<null>(function(resolve, _reject) {
+    const promisetwo = () => new Promise<null>(function(resolve, _reject) {
       resolve()
     });
     let checktwo = new LivenessCheck("checktwo", promisetwo)
@@ -230,7 +230,7 @@ describe('Health Checker test suite', function() {
 
   it('Health reports DOWN and check result with single failed check', function() {
     let healthcheck = new HealthChecker();
-    const promise = new Promise<null>(function(_resolve, _reject) {
+    const promise = () => new Promise<null>(function(_resolve, _reject) {
       throw new Error("Startup Failure");
     });
     let check = new LivenessCheck("check", promise)
@@ -245,7 +245,7 @@ describe('Health Checker test suite', function() {
 
   it('Health reports DOWN and check result with single rejected check', function() {
     let healthcheck = new HealthChecker();
-    const promise = new Promise<null>(function(_resolve, reject) {
+    const promise = () => new Promise<null>(function(_resolve, reject) {
       reject(new Error("Startup Failure"))
     });
     let check = new LivenessCheck("check", promise)
@@ -288,7 +288,7 @@ describe('Health Checker test suite', function() {
 
   it('Health reports DOWN and check result with one passed and one failed registered checks', function() {
     let healthcheck = new HealthChecker();
-    const promiseone = new Promise<null>(function(_resolve, _reject) {
+    const promiseone = () => new Promise<null>(function(_resolve, _reject) {
       throw new Error("Startup Failure");
     })
     
@@ -296,7 +296,7 @@ describe('Health Checker test suite', function() {
     healthcheck.registerLivenessCheck(checkone)
 
     // tslint:disable-next-line:no-shadowed-variable
-    const promisetwo = new Promise<null>(function(resolve, _reject) {
+    const promisetwo = () => new Promise<null>(function(resolve, _reject) {
       resolve()
     });
     let checktwo = new LivenessCheck("checktwo", promisetwo)

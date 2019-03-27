@@ -34,9 +34,10 @@ declare class Plugin {
     getStatus(): PluginStatus;
     constructor(name: string);
     wrapPromise(promise: Promise<null>, success: State, failure: State): Promise<null>;
+    wrapFunction(livenessFn: Function, success: State, failure: State): Promise<null>;
 }
 declare class LivenessCheck extends Plugin {
-    constructor(name: string, promise: Promise<null>);
+    constructor(name: string, livenessFn: Function);
     runCheck(): Promise<null>;
 }
 declare class ReadinessCheck extends Plugin {

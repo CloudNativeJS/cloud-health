@@ -190,13 +190,30 @@ class Plugin {
     })
     return wrappedPromise;
   }
+
+public wrapFunction(livenessFn: Function, success: State, failure: State) {
+  let wrappedPromise = new Promise<null>((resolve, reject) => {
+    Promise.resolve(livenessFn())
+      .then(() => {
+      this.status = success;
+        resolve()
+      })
+      .catch((error) => {
+        this.status = failure;
+        this.statusReason = error.message;
+        resolve();
+      })
+  })
+  return wrappedPromise;
+}
+
 }
 
 class LivenessCheck extends Plugin {
 
-  constructor(name: string, promise: Promise<null>) {
+  constructor(name: string, livenessFn: Function) {
     super(name)
-    this.promise = this.wrapPromise(promise, State.UP, State.DOWN)
+    this.promise = this.wrapFunction(livenessFn, State.UP, State.DOWN)
   }
 
   public runCheck() {

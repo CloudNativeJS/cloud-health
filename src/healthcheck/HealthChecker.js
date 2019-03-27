@@ -177,12 +177,27 @@ class Plugin {
         });
         return wrappedPromise;
     }
+    wrapFunction(livenessFn, success, failure) {
+        let wrappedPromise = new Promise((resolve, reject) => {
+            Promise.resolve(livenessFn())
+                .then(() => {
+                this.status = success;
+                resolve();
+            })
+                .catch((error) => {
+                this.status = failure;
+                this.statusReason = error.message;
+                resolve();
+            });
+        });
+        return wrappedPromise;
+    }
 }
 exports.Plugin = Plugin;
 class LivenessCheck extends Plugin {
-    constructor(name, promise) {
+    constructor(name, livenessFn) {
         super(name);
-        this.promise = this.wrapPromise(promise, State.UP, State.DOWN);
+        this.promise = this.wrapFunction(livenessFn, State.UP, State.DOWN);
     }
     runCheck() {
         return Promise.resolve(this.promise);
