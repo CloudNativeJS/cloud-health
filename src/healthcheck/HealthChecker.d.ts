@@ -21,7 +21,7 @@ declare class HealthChecker {
     private shutdownPlugins;
     private onShutdownRequest;
     constructor();
-    registerReadinessCheck(plugin: ReadinessCheck): Promise<null>;
+    registerReadinessCheck(plugin: ReadinessCheck): Promise<void>;
     registerLivenessCheck(plugin: LivenessCheck): void;
     registerShutdownCheck(plugin: ShutdownCheck): void;
     getStatus(): Promise<HealthStatus>;
@@ -30,22 +30,22 @@ declare class Plugin {
     protected name: string;
     protected status: State;
     protected statusReason: string;
-    protected promise: Promise<null>;
+    protected promise: () => Promise<void>;
     getStatus(): PluginStatus;
     constructor(name: string);
-    wrapPromise(promise: Promise<null>, success: State, failure: State): Promise<null>;
+    wrapPromise(promise: () => Promise<void>, success: State, failure: State): () => Promise<void>;
 }
 declare class LivenessCheck extends Plugin {
-    constructor(name: string, promise: Promise<null>);
-    runCheck(): Promise<null>;
+    constructor(name: string, livenessPromiseGen: () => Promise<void>);
+    runCheck(): Promise<void>;
 }
 declare class ReadinessCheck extends Plugin {
-    constructor(name: string, promise: Promise<null>);
-    runCheck(): Promise<null>;
+    constructor(name: string, readinessPromise: Promise<void>);
+    runCheck(): Promise<void>;
 }
 declare class ShutdownCheck extends Plugin {
-    constructor(name: string, promise: Promise<null>);
-    runCheck(): Promise<null>;
+    constructor(name: string, shutdownPromise: Promise<void>);
+    runCheck(): Promise<void>;
 }
 declare class PluginStatus {
     name: string;

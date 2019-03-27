@@ -14,6 +14,14 @@
  * See the License for the specific language governing permissions and
  * limitations under the License.
  */
+var __awaiter = (this && this.__awaiter) || function (thisArg, _arguments, P, generator) {
+    return new (P || (P = Promise))(function (resolve, reject) {
+        function fulfilled(value) { try { step(generator.next(value)); } catch (e) { reject(e); } }
+        function rejected(value) { try { step(generator["throw"](value)); } catch (e) { reject(e); } }
+        function step(result) { result.done ? resolve(result.value) : new P(function (resolve) { resolve(result.value); }).then(fulfilled, rejected); }
+        step((generator = generator.apply(thisArg, _arguments || [])).next());
+    });
+};
 Object.defineProperty(exports, "__esModule", { value: true });
 var State;
 (function (State) {
@@ -107,49 +115,47 @@ class HealthChecker {
         this.shutdownPlugins.push(plugin);
     }
     getStatus() {
-        let statusResponse;
-        // Handle shutdown case
-        if (this.shutdownRequested === true) {
-            statusResponse = new HealthStatus(State.STOPPING);
-            for (let check in this.shutdownPlugins) {
-                statusResponse.addStatus(this.shutdownPlugins[check].getStatus());
-            }
-            return Promise.resolve(statusResponse);
-        }
-        // Handle startup case
-        if (this.startupComplete === false) {
-            statusResponse = new HealthStatus(State.UNKNOWN);
-            for (let check in this.readinessPlugins) {
-                statusResponse.addStatus(this.readinessPlugins[check].getStatus());
-            }
-            if (statusResponse.status !== State.UP) {
-                return Promise.resolve(statusResponse);
-            }
-        }
-        // Startup completed, move onto liveness checks
-        this.startupComplete = true;
-        // Handle liveness
-        statusResponse = new HealthStatus(State.UP);
-        let filteredPromises = this.healthPlugins.filter(element => element !== undefined);
-        if (filteredPromises.length === 0) {
-            return Promise.resolve(statusResponse);
-        }
-        else if (filteredPromises.length === 1) {
-            return filteredPromises[0].runCheck()
-                .then(() => {
-                statusResponse.addStatus(filteredPromises[0].getStatus());
-                return statusResponse;
-            });
-        }
-        else {
-            return Promise.all(filteredPromises)
-                .then(() => {
-                filteredPromises.forEach((promise) => {
-                    statusResponse.addStatus(promise.getStatus());
+        return __awaiter(this, void 0, void 0, function* () {
+            let statusResponse;
+            // Handle shutdown case
+            if (this.shutdownRequested === true) {
+                statusResponse = new HealthStatus(State.STOPPING);
+                this.shutdownPlugins.map((check) => {
+                    const promiseCheck = check.runCheck();
+                    statusResponse.addStatus(check.getStatus());
+                    return promiseCheck;
                 });
                 return statusResponse;
-            });
-        }
+            }
+            // Handle startup case
+            if (this.startupComplete === false) {
+                statusResponse = new HealthStatus(State.UNKNOWN);
+                this.readinessPlugins.map((check) => {
+                    const promiseCheck = check.runCheck();
+                    statusResponse.addStatus(check.getStatus());
+                    return promiseCheck;
+                });
+                if (statusResponse.status !== State.UP) {
+                    return statusResponse;
+                }
+            }
+            // Startup completed, move onto liveness checks
+            this.startupComplete = true;
+            // Handle liveness
+            statusResponse = new HealthStatus(State.UP);
+            let filteredPromises = this.healthPlugins.filter(element => element !== undefined);
+            if (filteredPromises.length === 0) {
+                return statusResponse;
+            }
+            else {
+                yield Promise.all(filteredPromises.map((check) => __awaiter(this, void 0, void 0, function* () {
+                    const promiseCheck = yield check.runCheck();
+                    statusResponse.addStatus(check.getStatus());
+                    return promiseCheck;
+                })));
+                return statusResponse;
+            }
+        });
     }
 }
 exports.HealthChecker = HealthChecker;
@@ -163,52 +169,51 @@ class Plugin {
         return new PluginStatus(this.name, this.status, this.statusReason);
     }
     wrapPromise(promise, success, failure) {
-        let wrappedPromise = new Promise((resolve, reject) => {
-            Promise.resolve(promise)
+        let wrappedPromise = () => {
+            return promise()
                 .then(() => {
                 this.status = success;
-                resolve();
+                return Promise.resolve();
             })
                 .catch((error) => {
                 this.status = failure;
                 this.statusReason = error.message;
-                resolve();
+                return Promise.resolve();
             });
-        });
+        };
         return wrappedPromise;
     }
 }
 exports.Plugin = Plugin;
 class LivenessCheck extends Plugin {
-    constructor(name, promise) {
+    constructor(name, livenessPromiseGen) {
         super(name);
-        this.promise = this.wrapPromise(promise, State.UP, State.DOWN);
+        this.promise = this.wrapPromise(livenessPromiseGen, State.UP, State.DOWN);
     }
     runCheck() {
-        return Promise.resolve(this.promise);
+        return this.promise();
     }
 }
 exports.LivenessCheck = LivenessCheck;
 class ReadinessCheck extends Plugin {
-    constructor(name, promise) {
+    constructor(name, readinessPromise) {
         super(name);
-        this.promise = this.wrapPromise(promise, State.UP, State.DOWN);
+        this.promise = this.wrapPromise(() => readinessPromise, State.UP, State.DOWN);
         this.status = State.STARTING;
-        Promise.resolve(this.promise);
     }
     runCheck() {
-        return Promise.resolve(this.promise);
+        return this.promise();
     }
 }
 exports.ReadinessCheck = ReadinessCheck;
 class ShutdownCheck extends Plugin {
-    constructor(name, promise) {
+    constructor(name, shutdownPromise) {
         super(name);
-        this.promise = this.wrapPromise(promise, State.STOPPED, State.DOWN);
+        this.promise = this.wrapPromise(() => shutdownPromise, State.STOPPED, State.DOWN);
         this.status = State.STOPPING;
     }
     runCheck() {
-        return Promise.resolve(this.promise);
+        return this.promise();
     }
 }
 exports.ShutdownCheck = ShutdownCheck;

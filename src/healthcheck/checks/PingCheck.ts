@@ -19,7 +19,7 @@ import * as http from "http";
 
 class PingCheck extends LivenessCheck {
 
-    constructor(host: string, path = '', port = '80', method = 'HEAD' ) {
+    constructor(host: string, path = '', port = '80', method = 'HEAD') {
         let options = {
             hostname: host,
             port: port,
@@ -27,12 +27,12 @@ class PingCheck extends LivenessCheck {
             method: method
         };
 
-        let promise = new Promise<null>(function(resolve, reject) {
+        let promise = () => new Promise<void>(function (resolve, reject) {
             const req = http.request(options, (res) => {
-                
+
                 res.on("data", function (chunk) {
                 });
-                
+
                 res.on('end', () => {
                     resolve();
                 });
