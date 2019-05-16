@@ -40,7 +40,7 @@ Cloud Health allows you to register promises which are executed during the three
 
 Liveness and readiness checks are executed in the same way but are executed independently (based on calls to `getLivenessStatus()` or `getReadinessStatus()`) or together (based on calls to `getStatus()`).
 
-The difference between liveness and readiness is intended to be purpose: readiness should be used to denote whether an application is "ready" to receive requests, and liveness should be used to denote whether an application is "live" (vs. in a state where it should be restarted.   
+The difference between liveness and readiness is intended to be purpose: readiness should be used to denote whether an application is "ready" to receive requests, and liveness should be used to denote whether an application is "live" (vs. in a state where it should be restarted).   
 
 ### Using Cloud Health with Node.js
 1. Set up a HealthChecker:

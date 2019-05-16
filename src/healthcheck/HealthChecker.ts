@@ -91,11 +91,6 @@ class HealthChecker {
       this.shutdownPlugins.map((check) => {
         check.runCheck()
       })
-      //for (let plugin in this.shutdownPlugins) {
-      //  if (this.shutdownPlugins[plugin] != undefined) {
-      //    this.shutdownPlugins[plugin].runCheck()
-      //  }
-      //}
     }
   }
 
