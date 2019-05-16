@@ -25,9 +25,9 @@ for use with Kubernetes and Cloud Foundry based clouds.
 Cloud Health allows you to register promises which are executed during the three phases of your application, and allows you to call `getLivenessStatus()`, `getReadinessStatus()`, or a combined `getStatus()` to return a promise which resolves to whether the application is `STARTING`, `UP`, `DOWN`, `STOPPING` or `STOPPED`.
 
 1. At startup for "startup"  
- Promises that are created as part of a `StartupCheck` and registered using `registerStartupCheck` are executed at startup and can be used to execute any code that must complete before your application is ready. If the startup promises are still running, calls to `getLivenessStatus()`, `getReadinessStatus()`, and `getStatus()`,  return `STARTING`. Once the promises complete, `DOWN` is reported if there were any failures, or the "liveness" promises are then executed.
+ Promises that are created as part of a `StartupCheck` and registered using `registerStartupCheck` are executed at startup and can be used to execute any code that must complete before your application is ready. If the startup promises are still running, calls to `getLivenessStatus()`, `getReadinessStatus()`, and `getStatus()`,  return `STARTING`. Once the promises complete, `DOWN` is reported if there were any failures, or the "liveness" and/or "readiness" promises are then executed.
   
-2. At runtimes for "liveness"  
+2. At runtime for "liveness"  
  Promises that are created as part of a `LivenessCheck` and registered using `registerLivenessCheck` are executed on calls to `getLiveness()` and `getStatus()`. These can be used to ensure that the application is still running correctly. If no promises are registered, or the complete successfully, `UP` is reported. If there are any failures, `DOWN` is reported.
  
 3. At runtime for "readiness"  
@@ -43,12 +43,19 @@ Liveness and readiness checks are executed in the same way but are executed inde
 The difference between liveness and readiness is intended to be purpose: readiness should be used to denote whether an application is "ready" to receive requests, and liveness should be used to denote whether an application is "live" (vs. in a state where it should be restarted).   
 
 ### Using Cloud Health with Node.js
-1. Set up a HealthChecker:
+
+1. Installation:
+
+   ```js
+   npm install @cloudnative/health
+   ```
+
+2. Set up a HealthChecker:
   ```js
   const health = require('@cloudnative/health');
   let healthcheck = new health.HealthChecker();
   ```
-2. Register a startupCheck promise:
+3. Register a startupCheck promise:
   ```js
   const startPromise = () => new Promise(function (resolve, _reject) {
     setTimeout(function () {
@@ -61,7 +68,7 @@ The difference between liveness and readiness is intended to be purpose: readine
   ```
   Note that `registerStartupCheck()` also returns a promise which can be used to wait until the promise is resolved.  
   
-3. Register a livenessCheck promise:
+4. Register a livenessCheck promise:
   ```js
   const livePromise = () => new Promise(function (resolve, _reject) {
     setTimeout(function () {
@@ -72,7 +79,7 @@ The difference between liveness and readiness is intended to be purpose: readine
   let liveCheck = new health.LivenessCheck("liveCheck", livePromise);
   healthcheck.registerLivenessCheck(liveCheck);
   ```
-4. Register a shutdownCheck promise:
+5. Register a shutdownCheck promise:
   ```js
   const shutdownPromise = () => new Promise(function (resolve, _reject) {
     setTimeout(function () {
@@ -83,7 +90,7 @@ The difference between liveness and readiness is intended to be purpose: readine
   let shutdownCheck = new health.ShutdownCheck("shutdownCheck", shutdownPromise);
   healthcheck.registerShutdownCheck(shutdownCheck);
   ```
-5. Check the applications status:
+6. Check the applications status:
   ```js
   healthcheck.getStatus()
   .then((result) => console.log('STATUS: ' + JSON.stringify(result)));
