@@ -45,11 +45,9 @@ The difference between liveness and readiness is intended to be purpose: readine
 ### Using Cloud Health with Node.js
 
 1. Installation:
-
-   ```js
-   npm install @cloudnative/health
-   ```
-
+  ```js
+  npm install @cloudnative/health
+  ```
 2. Set up a HealthChecker:
   ```js
   const health = require('@cloudnative/health');
