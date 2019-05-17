@@ -14,38 +14,49 @@ declare class HealthStatus {
 }
 declare class HealthChecker {
     protected startupComplete: boolean;
-    private healthPlugins;
+    private startupPlugins;
     private readinessPlugins;
+    private healthPlugins;
     private shutdownEnabled;
     shutdownRequested: boolean;
     private shutdownPlugins;
     private onShutdownRequest;
     constructor();
-    registerReadinessCheck(plugin: ReadinessCheck): Promise<null>;
+    registerStartupCheck(plugin: StartupCheck): Promise<void>;
+    registerReadinessCheck(plugin: ReadinessCheck): void;
     registerLivenessCheck(plugin: LivenessCheck): void;
     registerShutdownCheck(plugin: ShutdownCheck): void;
     getStatus(): Promise<HealthStatus>;
+    private getStartupStatus;
+    getReadinessStatus(): Promise<HealthStatus>;
+    getLivenessStatus(): Promise<HealthStatus>;
+    private getHealthStatus;
+    private getShutdownStatus;
 }
 declare class Plugin {
     protected name: string;
     protected status: State;
     protected statusReason: string;
-    protected promise: Promise<null>;
+    protected promise: () => Promise<void>;
     getStatus(): PluginStatus;
     constructor(name: string);
-    wrapPromise(promise: Promise<null>, success: State, failure: State): Promise<null>;
+    wrapPromise(promise: () => Promise<void>, success: State, failure: State): () => Promise<void>;
 }
 declare class LivenessCheck extends Plugin {
-    constructor(name: string, promise: Promise<null>);
-    runCheck(): Promise<null>;
+    constructor(name: string, livenessPromiseGen: () => Promise<void>);
+    runCheck(): Promise<void>;
+}
+declare class StartupCheck extends Plugin {
+    constructor(name: string, startupPromise: () => Promise<void>);
+    runCheck(): Promise<void>;
 }
 declare class ReadinessCheck extends Plugin {
-    constructor(name: string, promise: Promise<null>);
-    runCheck(): Promise<null>;
+    constructor(name: string, livenessPromiseGen: () => Promise<void>);
+    runCheck(): Promise<void>;
 }
 declare class ShutdownCheck extends Plugin {
-    constructor(name: string, promise: Promise<null>);
-    runCheck(): Promise<null>;
+    constructor(name: string, shutdownPromise: () => Promise<void>);
+    runCheck(): Promise<void>;
 }
 declare class PluginStatus {
     name: string;
@@ -55,4 +66,4 @@ declare class PluginStatus {
     };
     constructor(name: string, state: State, reason: string);
 }
-export { HealthChecker, HealthStatus, Plugin, ReadinessCheck, LivenessCheck, ShutdownCheck, State, PluginStatus };
+export { HealthChecker, HealthStatus, Plugin, StartupCheck, ReadinessCheck, LivenessCheck, ShutdownCheck, State, PluginStatus };

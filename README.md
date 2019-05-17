@@ -12,6 +12,7 @@ A core library to provide application lifecycle handling and liveness checks for
 
 Cloud Health is used by [Cloud Health Connect](http://github.com/CloudNativeJS/cloud-health-connect) to provide a Connect Middleware for use in Express.js, Loopback and other frameworks that provides:
 
+* Startup checks
 * Readiness checks
 * Liveness checks
 * Shutdown handling
@@ -21,41 +22,53 @@ for use with Kubernetes and Cloud Foundry based clouds.
 
 ## Using Cloud Health
 
-Cloud Health allows you to register promises which are executed during the three phases of your application, and allows you to call `getStatus()` to return a promise which resolves to whether the application is `STARTING`, `UP`, `DOWN`, `STOPPING` or `STOPPED`.
+Cloud Health allows you to register promises which are executed during the three phases of your application, and allows you to call `getLivenessStatus()`, `getReadinessStatus()`, or a combined `getStatus()` to return a promise which resolves to whether the application is `STARTING`, `UP`, `DOWN`, `STOPPING` or `STOPPED`.
 
-1. At startup for "readiness"  
- Promises that are created as part of a `ReadinessCheck` and registered using `registerReadinessCheck` are executed at startup and can be used to execute any code that must complete before your application is ready. If the startup promises are still running, calls to `getStatus()` return `STARTING`. Once the promises complete, `DOWN` is reported if there were any failures, or the "liveness" promises are then executed.
+1. At startup for "startup"  
+ Promises that are created as part of a `StartupCheck` and registered using `registerStartupCheck` are executed at startup and can be used to execute any code that must complete before your application is ready. If the startup promises are still running, calls to `getLivenessStatus()`, `getReadinessStatus()`, and `getStatus()`,  return `STARTING`. Once the promises complete, `DOWN` is reported if there were any failures, or the "liveness" and/or "readiness" promises are then executed.
   
-2. At runtimes for "liveness"  
- Promises that are created as part of a `LivenessCheck` and registered using `registerLivenessCheck` are executed on calls to `getStatus()`. These can be used to ensure that the application is still running correctly. If no promises are registered, or the complete successfully, `UP` is reported. If there are any failures, `DOWN` is reported.
+2. At runtime for "liveness"  
+ Promises that are created as part of a `LivenessCheck` and registered using `registerLivenessCheck` are executed on calls to `getLiveness()` and `getStatus()`. These can be used to ensure that the application is still running correctly. If no promises are registered, or the complete successfully, `UP` is reported. If there are any failures, `DOWN` is reported.
  
-3. On a `SIGTERM` signal for shutdown  
- Promises that are created as part of a `ShutdownCheck` and registered using `registerShutdownCheck` are executed when the process receives a `SIGTERM` making it possible to clean up any resources used by the application. If the shutdown promises are still running, calls to `getStatus()` return `STOPPING`. Once the promises complete, `STOPPED` is reported.
+3. At runtime for "readiness"  
+ Promises that are created as part of a `ReadinessCheck` and registered using `registerReadinessCheck` are executed on calls to `getReadinessStatus()` and `getStatus()`. These can be used to ensure that the application is still running correctly. If no promises are registered, or the complete successfully, `UP` is reported. If there are any failures, `DOWN` is reported.
+ 
+4. On a `SIGTERM` signal for shutdown  
+ Promises that are created as part of a `ShutdownCheck` and registered using `registerShutdownCheck` are executed when the process receives a `SIGTERM` making it possible to clean up any resources used by the application. If the shutdown promises are still running, calls to `getReadinessStatus()`, `getLivenessStatus()` and `getStatus()` return `STOPPING`. Once the promises complete, `STOPPED` is reported.
 
+#### Readiness vs. Liveness
 
+Liveness and readiness checks are executed in the same way but are executed independently (based on calls to `getLivenessStatus()` or `getReadinessStatus()`) or together (based on calls to `getStatus()`).
+
+The difference between liveness and readiness is intended to be purpose: readiness should be used to denote whether an application is "ready" to receive requests, and liveness should be used to denote whether an application is "live" (vs. in a state where it should be restarted).   
 
 ### Using Cloud Health with Node.js
-1. Set up a HealthChecker:
+
+1. Installation:
+  ```js
+  npm install @cloudnative/health
+  ```
+2. Set up a HealthChecker:
   ```js
   const health = require('@cloudnative/health');
   let healthcheck = new health.HealthChecker();
   ```
-2. Register a readinessCheck promise:
+3. Register a startupCheck promise:
   ```js
-  const readyPromise = new Promise(function (resolve, _reject) {
+  const startPromise = () => new Promise(function (resolve, _reject) {
     setTimeout(function () {
-      console.log('READY!');
+      console.log('STARTED!');
       resolve();
     }, 10);
   });
-  let readyCheck = new health.ReadinessCheck("readyCheck", readyPromise);
-  healthcheck.registerReadinessCheck(readyCheck);
+  let startCheck = new health.StartupCheck("startCheck", startPromise);
+  healthcheck.registerStartupCheck(startCheck);
   ```
-  Note that `registerReadinessCheck()` also returns a promise which can be used to wait until the promise is resolved.  
+  Note that `registerStartupCheck()` also returns a promise which can be used to wait until the promise is resolved.  
   
-3. Register a livenessCheck promise:
+4. Register a livenessCheck promise:
   ```js
-  const livePromise = new Promise(function (resolve, _reject) {
+  const livePromise = () => new Promise(function (resolve, _reject) {
     setTimeout(function () {
       console.log('ALIVE!');
       resolve();
@@ -64,9 +77,9 @@ Cloud Health allows you to register promises which are executed during the three
   let liveCheck = new health.LivenessCheck("liveCheck", livePromise);
   healthcheck.registerLivenessCheck(liveCheck);
   ```
-4. Register a shutdownCheck promise:
+5. Register a shutdownCheck promise:
   ```js
-  const shutdownPromise = new Promise(function (resolve, _reject) {
+  const shutdownPromise = () => new Promise(function (resolve, _reject) {
     setTimeout(function () {
       console.log('DONE!');
       resolve();
@@ -75,7 +88,7 @@ Cloud Health allows you to register promises which are executed during the three
   let shutdownCheck = new health.ShutdownCheck("shutdownCheck", shutdownPromise);
   healthcheck.registerShutdownCheck(shutdownCheck);
   ```
-5. Check the applications status:
+6. Check the applications status:
   ```js
   healthcheck.getStatus()
   .then((result) => console.log('STATUS: ' + JSON.stringify(result)));
@@ -91,7 +104,8 @@ This module adopts the [Module Long Term Support (LTS)](http://github.com/CloudN
 
 | Module Version   | Release Date | Minimum EOL | EOL With     | Status  |
 |------------------|--------------|-------------|--------------|---------|
-| 1.x.x	         | July 2018    | Dec 2019    |              | Current |
+| 2.x.x	         | May 2019     | April 2021  |              | Current |
+| 1.x.x	         | July 2018    | Dec 2019    |              | LTS |
 
 
 ## License
