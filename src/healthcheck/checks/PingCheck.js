@@ -34,8 +34,6 @@ class PingCheck extends HealthChecker_1.LivenessCheck {
         };
         let promise = () => new Promise(function (resolve, reject) {
             const req = http.request(options, (res) => {
-                res.on("data", function (chunk) {
-                });
                 res.on('end', () => {
                     resolve();
                 });
