@@ -267,7 +267,7 @@ describe('Health Checker test suite', () => {
     const status = await healthcheck.getStatus();
     const result = JSON.stringify(status)
 
-    let expected = "{\"status\":\"DOWN\",\"checks\":[{\"name\":\"PingCheck HEAD:not-an-address.com:80/\",\"state\":\"DOWN\",\"data\":{\"reason\":\"Failed to ping HEAD:not-an-address.com:80/: getaddrinfo ENOTFOUND not-an-address.com not-an-address.com:80\"}}]}"
+    let expected = "{\"status\":\"DOWN\",\"checks\":[{\"name\":\"PingCheck HEAD:not-an-address.com:80/\",\"state\":\"DOWN\",\"data\":{\"reason\":\"Failed to ping HEAD:not-an-address.com:80/: getaddrinfo ENOTFOUND not-an-address.com\"}}]}"
     expect(result).to.equal(expected, `Should return: ${expected}, but returned: ${result}`);
   });
 
@@ -471,7 +471,7 @@ describe('Health Checker test suite', () => {
     const status = await healthcheck.getReadinessStatus();
     const result = JSON.stringify(status)
 
-    let expected = "{\"status\":\"DOWN\",\"checks\":[{\"name\":\"PingCheck HEAD:not-an-address.com:80/\",\"state\":\"DOWN\",\"data\":{\"reason\":\"Failed to ping HEAD:not-an-address.com:80/: getaddrinfo ENOTFOUND not-an-address.com not-an-address.com:80\"}}]}"
+    let expected = "{\"status\":\"DOWN\",\"checks\":[{\"name\":\"PingCheck HEAD:not-an-address.com:80/\",\"state\":\"DOWN\",\"data\":{\"reason\":\"Failed to ping HEAD:not-an-address.com:80/: getaddrinfo ENOTFOUND not-an-address.com\"}}]}"
     expect(result).to.equal(expected, `Should return: ${expected}, but returned: ${result}`);
   });
 
@@ -652,7 +652,7 @@ describe('Health Checker test suite', () => {
     const status = await healthcheck.getLivenessStatus();
     const result = JSON.stringify(status)
 
-    let expected = "{\"status\":\"DOWN\",\"checks\":[{\"name\":\"PingCheck HEAD:not-an-address.com:80/\",\"state\":\"DOWN\",\"data\":{\"reason\":\"Failed to ping HEAD:not-an-address.com:80/: getaddrinfo ENOTFOUND not-an-address.com not-an-address.com:80\"}}]}"
+    let expected = "{\"status\":\"DOWN\",\"checks\":[{\"name\":\"PingCheck HEAD:not-an-address.com:80/\",\"state\":\"DOWN\",\"data\":{\"reason\":\"Failed to ping HEAD:not-an-address.com:80/: getaddrinfo ENOTFOUND not-an-address.com\"}}]}"
     expect(result).to.equal(expected, `Should return: ${expected}, but returned: ${result}`);
   });
 
