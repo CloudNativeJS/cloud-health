@@ -29,6 +29,6 @@
     "coveralls": "^3.0.6",
     "mocha": "^6.2.0",
     "nyc": "^14.1.0",
-    "typescript": "^3.3.3333"
+    "typescript": "^3.5.3"
   }
 }
