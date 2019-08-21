@@ -98,6 +98,9 @@ class HealthChecker {
             });
         };
     }
+    getStartUpComplete() {
+        return this.startupComplete;
+    }
     registerStartupCheck(plugin) {
         this.startupPlugins.push(plugin);
         this.startupComplete = false;
@@ -127,17 +130,20 @@ class HealthChecker {
             return this.getHealthStatus();
         });
     }
+    getPromiseStatus(statusResponse) {
+        return __awaiter(this, void 0, void 0, function* () {
+            const runChecks = this.startupPlugins.map(check => check.runCheck());
+            yield Promise.all(runChecks);
+            this.startupPlugins.forEach(check => statusResponse.addStatus(check.getStatus()));
+        });
+    }
     getStartupStatus() {
         return __awaiter(this, void 0, void 0, function* () {
             let statusResponse;
             // Handle startup case
             if (this.startupComplete === false) {
                 statusResponse = new HealthStatus(State.UNKNOWN);
-                this.startupPlugins.map((check) => {
-                    const promiseCheck = check.runCheck();
-                    statusResponse.addStatus(check.getStatus());
-                    return promiseCheck;
-                });
+                yield this.getPromiseStatus(statusResponse);
                 if (statusResponse.status !== State.UP) {
                     return statusResponse;
                 }
@@ -153,7 +159,14 @@ class HealthChecker {
                 return this.getShutdownStatus();
             }
             if (this.startupComplete === false) {
-                return this.getStartupStatus();
+                statusResponse = new HealthStatus(State.UNKNOWN);
+                yield this.getPromiseStatus(statusResponse);
+                if (statusResponse.status === State.UP) {
+                    this.startupComplete = true;
+                }
+                else {
+                    return this.getStartupStatus();
+                }
             }
             // Handle readiness
             statusResponse = new HealthStatus(State.UP);
@@ -178,7 +191,14 @@ class HealthChecker {
                 return this.getShutdownStatus();
             }
             if (this.startupComplete === false) {
-                return this.getStartupStatus();
+                statusResponse = new HealthStatus(State.UNKNOWN);
+                yield this.getPromiseStatus(statusResponse);
+                if (statusResponse.status === State.UP) {
+                    this.startupComplete = true;
+                }
+                else {
+                    return this.getStartupStatus();
+                }
             }
             // Handle liveness
             statusResponse = new HealthStatus(State.UP);
@@ -223,7 +243,11 @@ class HealthChecker {
             // Handle shutdown case
             if (this.shutdownRequested === true) {
                 statusResponse = new HealthStatus(State.STOPPING);
-                yield this.shutdownPlugins.map((check) => {
+                const runChecks = this.shutdownPlugins.map((check) => {
+                    check.runCheck();
+                });
+                yield Promise.all(runChecks);
+                this.shutdownPlugins.forEach((check) => {
                     statusResponse.addStatus(check.getStatus());
                 });
                 return statusResponse;
@@ -284,9 +308,9 @@ class StartupCheck extends Plugin {
 }
 exports.StartupCheck = StartupCheck;
 class ReadinessCheck extends Plugin {
-    constructor(name, livenessPromiseGen) {
+    constructor(name, ReadinessPromiseGen) {
         super(name);
-        this.promise = this.wrapPromise(livenessPromiseGen, State.UP, State.DOWN);
+        this.promise = this.wrapPromise(ReadinessPromiseGen, State.UP, State.DOWN);
         this.status = State.STARTING;
     }
     runCheck() {

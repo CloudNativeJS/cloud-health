@@ -22,11 +22,13 @@ declare class HealthChecker {
     private shutdownPlugins;
     private onShutdownRequest;
     constructor();
+    getStartUpComplete(): boolean;
     registerStartupCheck(plugin: StartupCheck): Promise<void>;
     registerReadinessCheck(plugin: ReadinessCheck): void;
     registerLivenessCheck(plugin: LivenessCheck): void;
     registerShutdownCheck(plugin: ShutdownCheck): void;
     getStatus(): Promise<HealthStatus>;
+    private getPromiseStatus;
     private getStartupStatus;
     getReadinessStatus(): Promise<HealthStatus>;
     getLivenessStatus(): Promise<HealthStatus>;
@@ -51,7 +53,7 @@ declare class StartupCheck extends Plugin {
     runCheck(): Promise<void>;
 }
 declare class ReadinessCheck extends Plugin {
-    constructor(name: string, livenessPromiseGen: () => Promise<void>);
+    constructor(name: string, ReadinessPromiseGen: () => Promise<void>);
     runCheck(): Promise<void>;
 }
 declare class ShutdownCheck extends Plugin {

@@ -33,9 +33,9 @@ class HealthStatus {
   }
 
   public addStatus(status: PluginStatus) {
-    this.checks.push(status)
+    this.checks.push(status);
     if (this.status === State.UNKNOWN) {
-      this.status = status.state
+      this.status = status.state;
     }
     else if (this.status === State.STARTING) {
       if (status.state === State.STARTING) this.status = State.STARTING;
@@ -89,15 +89,19 @@ class HealthChecker {
     this.onShutdownRequest = () => {
       this.shutdownRequested = true;
       this.shutdownPlugins.map((check) => {
-        check.runCheck()
-      })
+        check.runCheck();
+      });
     }
+  }
+
+  public getStartUpComplete() {
+    return this.startupComplete;
   }
 
   public registerStartupCheck(plugin: StartupCheck) {
     this.startupPlugins.push(plugin);
     this.startupComplete = false;
-    return plugin.runCheck()
+    return plugin.runCheck();
   }
 
   public registerReadinessCheck(plugin: ReadinessCheck) {
@@ -118,12 +122,18 @@ class HealthChecker {
 
   public async getStatus(): Promise<HealthStatus> {
     if (this.shutdownRequested === true) {
-      return this.getShutdownStatus()
+      return this.getShutdownStatus();
     }
     if (this.startupComplete === false) {
-      return this.getStartupStatus()
+      return this.getStartupStatus();
     }
-    return this.getHealthStatus()
+    return this.getHealthStatus();
+  }
+
+  private async getPromiseStatus(statusResponse: HealthStatus) {
+    const runChecks = this.startupPlugins.map(check => check.runCheck());
+    await Promise.all(runChecks);
+    this.startupPlugins.forEach(check => statusResponse.addStatus(check.getStatus()));
   }
 
   private async getStartupStatus(): Promise<HealthStatus> {
@@ -131,38 +141,39 @@ class HealthChecker {
 
     // Handle startup case
     if (this.startupComplete === false) {
-      statusResponse = new HealthStatus(State.UNKNOWN)
+      statusResponse = new HealthStatus(State.UNKNOWN);
 
-      this.startupPlugins.map((check) => {
-        const promiseCheck = check.runCheck();
-        statusResponse.addStatus(check.getStatus());
-        return promiseCheck;
-      });
+      await this.getPromiseStatus(statusResponse);
 
       if (statusResponse.status !== State.UP) {
         return statusResponse;
       }
       this.startupComplete = true;
     } 
-    return this.getHealthStatus()
+    return this.getHealthStatus();
   }
 
   public async getReadinessStatus(): Promise<HealthStatus> {
     let statusResponse: HealthStatus;
 
     if (this.shutdownRequested === true) {
-      return this.getShutdownStatus()
+      return this.getShutdownStatus();
     }
     if (this.startupComplete === false) {
-      return this.getStartupStatus()
+      statusResponse = new HealthStatus(State.UNKNOWN);
+      await this.getPromiseStatus(statusResponse);
+      if(statusResponse.status === State.UP) {
+        this.startupComplete = true;
+      } else {
+        return this.getStartupStatus();
+      }
     }
 
     // Handle readiness
-    statusResponse = new HealthStatus(State.UP)
-
-    let filteredPromises = this.readinessPlugins.filter(element => element !== undefined)
+    statusResponse = new HealthStatus(State.UP);
+    let filteredPromises = this.readinessPlugins.filter(element => element !== undefined);
     if (filteredPromises.length === 0) {
-      return statusResponse
+      return statusResponse;
     } else {
       await Promise.all(filteredPromises.map(async (check) => {
         const promiseCheck = await check.runCheck();
@@ -175,19 +186,25 @@ class HealthChecker {
 
   public async getLivenessStatus(): Promise<HealthStatus> {
     let statusResponse: HealthStatus;
-    
+
     if (this.shutdownRequested === true) {
-      return this.getShutdownStatus()
+      return this.getShutdownStatus();
     }
     if (this.startupComplete === false) {
-      return this.getStartupStatus()
+      statusResponse = new HealthStatus(State.UNKNOWN);
+      await this.getPromiseStatus(statusResponse);
+      if(statusResponse.status === State.UP) {
+        this.startupComplete = true;
+      } else {
+        return this.getStartupStatus();
+      }
     }
     // Handle liveness
-    statusResponse = new HealthStatus(State.UP)
+    statusResponse = new HealthStatus(State.UP);
 
-    let filteredPromises = this.healthPlugins.filter(element => element !== undefined)
+    let filteredPromises = this.healthPlugins.filter(element => element !== undefined);
     if (filteredPromises.length === 0) {
-      return statusResponse
+      return statusResponse;
     } else {
       await Promise.all(filteredPromises.map(async (check) => {
         const promiseCheck = await check.runCheck();
@@ -203,22 +220,22 @@ class HealthChecker {
     let statusResponse: HealthStatus;
 
     // Handle liveness
-    statusResponse = new HealthStatus(State.UP)
+    statusResponse = new HealthStatus(State.UP);
 
     await Promise.all([this.getReadinessStatus(), this.getLivenessStatus()])
     .then((values) => {
-      let readiness = values[0]
-      let liveness = values[1]
+      let readiness = values[0];
+      let liveness = values[1];
 
       readiness.checks.map((check) => {
-        statusResponse.addStatus(check)
-      })
+        statusResponse.addStatus(check);
+      });
       liveness.checks.map((check) => {
-        statusResponse.addStatus(check)
-      })
-      return statusResponse
-    })
-    return statusResponse
+        statusResponse.addStatus(check);
+      });
+      return statusResponse;
+    });
+    return statusResponse;
   }
 
   private async getShutdownStatus(): Promise<HealthStatus>  {
@@ -226,25 +243,29 @@ class HealthChecker {
 
     // Handle shutdown case
     if (this.shutdownRequested === true) {
-      statusResponse = new HealthStatus(State.STOPPING)
-      await this.shutdownPlugins.map((check) => {
+      statusResponse = new HealthStatus(State.STOPPING);
+      const runChecks = this.shutdownPlugins.map((check) => {
+        check.runCheck();
+      });
+      await Promise.all(runChecks);
+      this.shutdownPlugins.forEach((check) => {
         statusResponse.addStatus(check.getStatus());
-      })
-      return statusResponse
+      });
+      return statusResponse;
     } else {
-      return this.getHealthStatus()
+      return this.getHealthStatus();
     }
   }
 }
 
 class Plugin {
-  protected name: string
-  protected status: State = State.DOWN
-  protected statusReason: string = ""
+  protected name: string;
+  protected status: State = State.DOWN;
+  protected statusReason: string = "";
   protected promise!: () => Promise<void>;
 
   public getStatus(): PluginStatus {
-    return new PluginStatus(this.name, this.status, this.statusReason)
+    return new PluginStatus(this.name, this.status, this.statusReason);
   }
 
   constructor(name: string) {
@@ -263,18 +284,16 @@ class Plugin {
           this.status = failure;
           this.statusReason = error.message;
           return Promise.resolve();
-        })
+        });
     }
     return wrappedPromise;
   }
 }
 
 class LivenessCheck extends Plugin {
-
   constructor(name: string, livenessPromiseGen: () => Promise<void>) {
-    super(name)
-
-    this.promise = this.wrapPromise(livenessPromiseGen, State.UP, State.DOWN)
+    super(name);
+    this.promise = this.wrapPromise(livenessPromiseGen, State.UP, State.DOWN);
   }
 
   public runCheck() {
@@ -284,8 +303,8 @@ class LivenessCheck extends Plugin {
 
 class StartupCheck extends Plugin {
   constructor(name: string, startupPromise: () => Promise<void>) {
-    super(name)
-    this.promise = this.wrapPromise(startupPromise, State.UP, State.DOWN)
+    super(name);
+    this.promise = this.wrapPromise(startupPromise, State.UP, State.DOWN);
     this.status = State.STARTING;
   }
 
@@ -295,9 +314,9 @@ class StartupCheck extends Plugin {
 }
 
 class ReadinessCheck extends Plugin {
-  constructor(name: string, livenessPromiseGen: () => Promise<void>) {
-    super(name)
-    this.promise = this.wrapPromise(livenessPromiseGen, State.UP, State.DOWN)
+  constructor(name: string, ReadinessPromiseGen: () => Promise<void>) {
+    super(name);
+    this.promise = this.wrapPromise(ReadinessPromiseGen, State.UP, State.DOWN);
     this.status = State.STARTING;
   }
 
@@ -308,13 +327,13 @@ class ReadinessCheck extends Plugin {
 
 class ShutdownCheck extends Plugin {
   constructor(name: string, shutdownPromise: () => Promise<void>) {
-    super(name)
-    this.promise = this.wrapPromise(shutdownPromise, State.STOPPED, State.DOWN)
+    super(name);
+    this.promise = this.wrapPromise(shutdownPromise, State.STOPPED, State.DOWN);
     this.status = State.STOPPING;
   }
 
   public runCheck() {
-    return this.promise()
+    return this.promise();
   }
 }
 
