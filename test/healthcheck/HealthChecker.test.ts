@@ -22,38 +22,38 @@ describe('Health Checker test suite', () => {
 
   
   it('Startup reports DOWN', async () => {
-    let healthcheck = new HealthChecker()
+    let healthcheck = new HealthChecker();
     const promise = () => new Promise<void>((_resolve, _reject) => {
       throw new Error("Startup Failure");
     });
-    let check = new StartupCheck("check", promise)
+    let check = new StartupCheck("check", promise);
 
-    await healthcheck.registerStartupCheck(check);
+    healthcheck.registerStartupCheck(check);
     const status = await healthcheck.getStatus();
-    const result = status.status
+    const result = status.status;
 
-    expect(result).to.equal(State.DOWN, `Should return: ${State.DOWN} , but returned: ${result}`)
+    expect(result).to.equal(State.DOWN, `Should return: ${State.DOWN} , but returned: ${result}`);
   });
 
   it('Startup reports UP', async () => {
-    let healthcheck = new HealthChecker()
+    let healthcheck = new HealthChecker();
     // tslint:disable-next-line:no-shadowed-variable
     const promise = () => new Promise<void>((resolve, _reject) => {
-      resolve()
+      resolve();
     });
-    let check = new StartupCheck("check", promise)
-    await healthcheck.registerReadinessCheck(check);
+    let check = new StartupCheck("check", promise);
+    healthcheck.registerStartupCheck(check);
     const status = await healthcheck.getStatus();
-    const result = status.status
-    expect(result).to.equal(State.UP, `Should return: ${State.UP} , but returned: ${result}`)
+    const result = status.status;
+    expect(result).to.equal(State.UP, `Should return: ${State.UP} , but returned: ${result}`);
   });
-  
-  it('Startup reports STARTING when first is starting and second is up', async () => {
-    let healthcheck = new HealthChecker()
 
-    const Check1 = () => new Promise<void>((resolve, _reject) => {
+  it('Startup reports STARTING when first is starting and second is up', async () => {
+    let healthcheck = new HealthChecker();
+
+    const Check1 = () => new Promise<void>((_resolve, _reject) => {
       setTimeout(() => {
-        process.kill(process.pid, 'SIGTERM')
+        process.kill(process.pid, 'SIGTERM');
       }, 1000);
     });
 
@@ -65,40 +65,43 @@ describe('Health Checker test suite', () => {
     });
 
     let check2 = new StartupCheck('Check2', Check2);
-    await healthcheck.registerStartupCheck(check2)
+    healthcheck.registerStartupCheck(check2)
 
-    const status = await healthcheck.getStatus()
-    const result = JSON.stringify(status);
-    let expected = "{\"status\":\"STARTING\",\"checks\":[{\"name\":\"Check1\",\"state\":\"STARTING\",\"data\":{\"reason\":\"\"}},{\"name\":\"Check2\",\"state\":\"UP\",\"data\":{\"reason\":\"\"}}]}"
-    expect(result).to.equal(expected, `Should return: ${expected}, but returned: ${result}`);
+    .then(async () => {
+      const status = await healthcheck.getStatus()
+      const result = JSON.stringify(status);
+      let expected = "{\"status\":\"STARTING\",\"checks\":[{\"name\":\"Check1\",\"state\":\"STARTING\",\"data\":{\"reason\":\"\"}},{\"name\":\"Check2\",\"state\":\"UP\",\"data\":{\"reason\":\"\"}}]}";
+      expect(result).to.equal(expected, `Should return: ${expected}, but returned: ${result}`);
+    });
   });
 
   it('Startup reports STARTING when first is up and the second is starting', async () => {
-    let healthcheck = new HealthChecker()
+    let healthcheck = new HealthChecker();
 
     const Check1 = () => new Promise<void>((resolve, _reject) => {
       resolve();
     });
 
     let check1 = new StartupCheck('Check1', Check1);
-    await healthcheck.registerStartupCheck(check1);
+    healthcheck.registerStartupCheck(check1);
 
-    const Check2 = () => new Promise<void>((resolve, _reject) => {
+    const Check2 = () => new Promise<void>((_resolve, _reject) => {
       setTimeout(() => {
-        process.kill(process.pid, 'SIGTERM')
+        process.kill(process.pid, 'SIGTERM');
       }, 1000);
     });
     let check2 = new StartupCheck('Check2', Check2);
-    healthcheck.registerStartupCheck(check2);
-
-    const status = await healthcheck.getStatus();
-    const result = JSON.stringify(status);
-    let expected = "{\"status\":\"STARTING\",\"checks\":[{\"name\":\"Check1\",\"state\":\"UP\",\"data\":{\"reason\":\"\"}},{\"name\":\"Check2\",\"state\":\"STARTING\",\"data\":{\"reason\":\"\"}}]}"
-    expect(result).to.equal(expected, `Should return: ${expected}, but returned: ${result}`);
+    healthcheck.registerStartupCheck(check2)
+    .then(async () => {
+      const status = await healthcheck.getStatus();
+      const result = status.status;
+      let expected = "{\"status\":\"STARTING\",\"checks\":[{\"name\":\"Check1\",\"state\":\"UP\",\"data\":{\"reason\":\"\"}},{\"name\":\"Check2\",\"state\":\"STARTING\",\"data\":{\"reason\":\"\"}}]}";
+      expect(result).to.equal(expected, `Should return: ${expected}, but returned: ${result}`);
+    });
   });
 
   it('Startup reports STARTING with returned Promise', async () => {
-    let healthcheck = new HealthChecker()
+    let healthcheck = new HealthChecker();
 
     const promise = () => new Promise<void>((_resolve, _reject) => {
       // tslint:disable-next-line:no-shadowed-variable no-unused-expression
@@ -106,31 +109,30 @@ describe('Health Checker test suite', () => {
         setTimeout(resolve, 100, 'foo');
       });
     });
-    let check = new StartupCheck("check", promise)
+    let check = new StartupCheck("check", promise);
     healthcheck.registerStartupCheck(check)
-
-    const status = await healthcheck.getStatus();
-    const result = status.status
-    expect(result).to.equal(State.STARTING, `Should return: ${State.STARTING} , but returned: ${result}`)
+    .then(async () => {
+      const status = await healthcheck.getStatus();
+      const result = status.status;
+      expect(result).to.equal(State.STARTING, `Should return: ${State.STARTING} , but returned: ${result}`);
+    });
   });
 
-  it('Startup reports STARTING without returned Promise', () => {
+  it('Startup reports STARTING without returned Promise', async () => {
     let healthcheck = new HealthChecker()
     const promise = () => new Promise<void>((_resolve, _reject) => {
-      // tslint:disable-next-line:no-unused-expression no-shadowed-variable
+    // tslint:disable-next-line:no-unused-expression no-shadowed-variable
       new Promise((resolve, _reject) => {
         setTimeout(resolve, 100, 'foo');
       });
     });
     let check = new StartupCheck("check", promise)
     healthcheck.registerStartupCheck(check)
-      .then(() => {
-        return healthcheck.getStatus().then((status) => {
-          const result = status.status
-
-          expect(result).to.equal(State.STARTING, `Should return: ${State.STARTING} , but returned: ${result}`)
-        });
-      });
+    .then(async () => {
+      const status = await healthcheck.getStatus();
+      const result = status.status;
+      expect(result).to.equal(State.STARTING, `Should return: ${State.STARTING} , but returned: ${result}`);
+    });
   });
 
   it('Startup reports STARTING when multiple checks are still starting', async () => {
@@ -152,11 +154,196 @@ describe('Health Checker test suite', () => {
     let check2 = new StartupCheck("check", promise2)
 
     healthcheck.registerStartupCheck(check1);
-    healthcheck.registerStartupCheck(check2);
+    healthcheck.registerStartupCheck(check2)
+    .then(async() => {
+      const status = await healthcheck.getStatus()
+      const result = status.status
+       expect(result).to.equal(State.STARTING, `Should return: ${State.STARTING} , but returned: ${result}`)
+    });
+  });
 
-    const status = await healthcheck.getStatus()
+  it('Liveness reports DOWN if startup is DOWN', async () => {
+    let healthcheck = new HealthChecker();
+
+    const promiseone = () => new Promise<void>((_resolve, _reject) => {
+      throw new Error("Liveness Failure");
+    })
+
+    let checkone = new LivenessCheck("checkone", promiseone);
+
+    healthcheck.registerLivenessCheck(checkone);
+
+    const status = await healthcheck.getLivenessStatus();
+    const result = status.status;
+    expect(result).to.equal(State.DOWN, `Should return: ${State.DOWN} , but returned: ${result}`)
+  })
+
+  it('Startup is UP and Liveness is DOWN, calling Liveness status should report DOWN', async () => {
+    let healthcheck = new HealthChecker();
+
+    const LivenessPromise = () => new Promise<void>((_resolve, _reject) => {
+      throw new Error("error");
+    })
+
+    const StartupPromise = () => new Promise<void>((resolve, _reject) => {
+      resolve();
+    });
+
+    let checkone = new LivenessCheck("checkone", LivenessPromise);
+    let checktwo = new StartupCheck("checktwo",StartupPromise);   
+    //startup check promise is resolved so liveness should not fallback to get startupstatus
+
+    healthcheck.registerStartupCheck(checktwo);
+    healthcheck.registerLivenessCheck(checkone);
+
+    const status = await healthcheck.getLivenessStatus();
     const result = status.status
-    expect(result).to.equal(State.STARTING, `Should return: ${State.STARTING} , but returned: ${result}`)
+    expect(result).to.equal(State.DOWN, `Should return: ${State.DOWN} , but returned: ${result}`)
+  });
+
+  it('Startup is UP and Liveness is DOWN, calling getStatus should report DOWN', async () => {
+    let healthcheck = new HealthChecker();
+
+    const LivenessPromise = () => new Promise<void>((_resolve, _reject) => {
+      throw new Error("error")
+    })
+
+    const StartupPromise = () => new Promise<void>((resolve, _reject) => {
+      resolve();
+    });
+
+    let checkone = new LivenessCheck("checkone", LivenessPromise);
+    let checktwo = new StartupCheck("checktwo",StartupPromise);
+
+    healthcheck.registerStartupCheck(checktwo);
+    healthcheck.registerLivenessCheck(checkone);
+    
+    const status = await healthcheck.getStatus();
+    const result = status.status
+    expect(result).to.equal(State.DOWN, `Should return: ${State.DOWN} , but returned: ${result}`)
+  });
+  
+
+  it('Startup is UP and Liveness is UP, calling Liveness status should report UP', async () => {
+    let healthcheck = new HealthChecker();
+
+    const LivenessPromise = () => new Promise<void>((resolve, _reject) => {
+      resolve();
+    })
+
+    const StartupPromise = () => new Promise<void>((resolve, _reject) => {
+      resolve();
+    });
+
+    let checkone = new LivenessCheck("checkone", LivenessPromise);
+    let checktwo = new StartupCheck("checktwo",StartupPromise);   
+
+    healthcheck.registerStartupCheck(checktwo);
+    healthcheck.registerLivenessCheck(checkone);
+
+    const status = await healthcheck.getLivenessStatus();
+    const result = status.status
+    expect(result).to.equal(State.UP, `Should return: ${State.UP} , but returned: ${result}`)
+  });
+
+  it('Startup is UP and Readiness is DOWN, calling Readiness status should report DOWN', async () => {
+    let healthcheck = new HealthChecker();
+
+    const ReadinessPromise = () => new Promise<void>((_resolve, _reject) => {
+      throw new Error("error")
+    })
+
+    const StartupPromise = () => new Promise<void>((resolve, _reject) => {
+      resolve();
+    });
+
+    let checkone = new ReadinessCheck("checkone", ReadinessPromise);
+    let checktwo = new StartupCheck("checktwo",StartupPromise);
+
+    healthcheck.registerStartupCheck(checktwo);
+    healthcheck.registerReadinessCheck(checkone);
+
+    const status = await healthcheck.getReadinessStatus();
+    const result = status.status
+    expect(result).to.equal(State.DOWN, `Should return: ${State.DOWN} , but returned: ${result}`)
+  });
+
+  it('Startup is UP and Readiness is DOWN, calling getSatus should report DOWN', async () => {
+    let healthcheck = new HealthChecker();
+
+    const ReadinessPromise = () => new Promise<void>((_resolve, _reject) => {
+      throw new Error("error")
+    })
+
+    const StartupPromise = () => new Promise<void>((resolve, _reject) => {
+      resolve();
+    });
+
+    let checkone = new ReadinessCheck("checkone", ReadinessPromise);
+    let checktwo = new StartupCheck("checktwo",StartupPromise);
+
+    healthcheck.registerStartupCheck(checktwo);
+    healthcheck.registerReadinessCheck(checkone);
+    
+    const status = await healthcheck.getStatus();
+    const result = status.status
+    expect(result).to.equal(State.DOWN, `Should return: ${State.DOWN} , but returned: ${result}`)
+  });
+  
+  it('Startup is UP, getStartupComplete should return true with a liveness check', async() => {
+    let healthcheck = new HealthChecker();
+  
+    const StartupPromise = () => new Promise<void>((resolve, _reject) => {
+      resolve();
+    });
+  
+    let check = new LivenessCheck("check",StartupPromise);
+  
+    healthcheck.registerLivenessCheck(check);
+    let status = await healthcheck.getLivenessStatus();  
+  
+    let result = await healthcheck.getStartUpComplete();
+  
+    expect(result).to.equal(true, `Should return that startupComplete is true, but returned ${result}`)
+  });
+
+  it('Startup is DOWN, getStartupComplete should return false with a getStatus call', async() => {
+    let healthcheck = new HealthChecker();
+  
+    const StartupPromise = () => new Promise<void>((_resolve, _reject) => {
+      throw new Error("Startup failed");
+    });
+  
+    let check = new StartupCheck("check",StartupPromise);
+  
+    healthcheck.registerStartupCheck(check);
+    await healthcheck.getStatus();  
+    
+    let result = await healthcheck.getStartUpComplete();
+  
+    expect(result).to.equal(false, `Should return that startupComplete is false, but returned ${result}`)
+  });
+
+  it('Startup is DOWN and should return DOWN with a liveness check', async() => {
+    let healthcheck = new HealthChecker();
+
+    const StartupPromise = () => new Promise<void>((_resolve,_reject) => {
+      throw new Error("Startup failed");
+    });
+
+    const LivenessPromise = () => new Promise<void>((resolve,_reject) => {
+      resolve();
+    });
+
+    let check = new StartupCheck("check",StartupPromise);
+    let check2 = new ReadinessCheck("check2",LivenessPromise);
+
+    healthcheck.registerStartupCheck(check)
+    healthcheck.registerLivenessCheck(check2) 
+
+    let status = await healthcheck.getLivenessStatus()
+    let result = status.status
+    expect(result).to.equal(State.DOWN, `Should return ${State.DOWN} but returned ${result}`)
   });
 
   it('Health reports UP by default', async () => {
