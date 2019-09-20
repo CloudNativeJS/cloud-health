@@ -1,11 +1,12 @@
 # Cloud Health
 <p align=center>
 <a href='http://CloudNativeJS.io/'><img src='https://img.shields.io/badge/homepage-CloudNativeJS-blue.svg'></a>
+<a href='https://www.npmjs.org/package/@cloudnative/health'><img src='https://img.shields.io/badge/npm-v2.1.0-blue' alt='npm'/>
 <a href="http://travis-ci.org/CloudNativeJS/cloud-health"><img src="https://secure.travis-ci.org/CloudNativeJS/cloud-health.svg?branch=master" alt="Build status"></a>
 <a href='https://coveralls.io/github/CloudNativeJS/cloud-health?branch=master'><img src='https://coveralls.io/repos/github/CloudNativeJS/cloud-health/badge.svg?branch=master' alt='Coverage Status' /></a>
 <a href='https://greenkeeper.io/'><img src='https://badges.greenkeeper.io/CloudNativeJS/cloud-health.svg' alt='Greenkeeper' /></a>
 <a href='http://github.com/CloudNativeJS/ModuleLTS'><img src='https://img.shields.io/badge/Module%20LTS-Adopted-brightgreen.svg?style=flat' alt='Module LTS Adopted' /></a> 
-<a href='http://ibm.biz/node-support'><img src='https://img.shields.io/badge/IBM%20Support-Frameworks-brightgreen.svg?style=flat' alt='IBM Support' /></a>   
+<a href='http://ibm.biz/node-support'><img src='https://img.shields.io/badge/IBM%20Support-Frameworks-brightgreen.svg?style=flat' alt='IBM Support' /></a>
 </p>
 
 A core library to provide application lifecycle handling and liveness checks for Node.js applications.
