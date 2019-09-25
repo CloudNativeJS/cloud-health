@@ -143,7 +143,11 @@ class HealthChecker {
             // Handle startup case
             if (this.startupComplete === false) {
                 statusResponse = new HealthStatus(State.UNKNOWN);
-                yield this.getPromiseStatus(statusResponse);
+                this.startupPlugins.map((check) => {
+                    const promiseCheck = check.runCheck();
+                    statusResponse.addStatus(check.getStatus());
+                    return promiseCheck;
+                });
                 if (statusResponse.status !== State.UP) {
                     return statusResponse;
                 }

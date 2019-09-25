@@ -143,7 +143,11 @@ class HealthChecker {
     if (this.startupComplete === false) {
       statusResponse = new HealthStatus(State.UNKNOWN);
 
-      await this.getPromiseStatus(statusResponse);
+      this.startupPlugins.map((check) => {
+        const promiseCheck = check.runCheck();
+        statusResponse.addStatus(check.getStatus());
+        return promiseCheck;
+      });
 
       if (statusResponse.status !== State.UP) {
         return statusResponse;

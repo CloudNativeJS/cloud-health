@@ -28,108 +28,161 @@ const index_1 = require("../../index");
 chai_1.should();
 describe('Health Checker test suite', () => {
     it('Startup reports DOWN', () => __awaiter(this, void 0, void 0, function* () {
-        let healthcheck = new index_1.HealthChecker();
+        let healthCheck = new index_1.HealthChecker();
         const promise = () => new Promise((_resolve, _reject) => {
             throw new Error("Startup Failure");
         });
         let check = new index_1.StartupCheck("check", promise);
-        healthcheck.registerStartupCheck(check);
-        const status = yield healthcheck.getStatus();
+        yield healthCheck.registerStartupCheck(check);
+        const status = yield healthCheck.getStatus();
         const result = status.status;
         chai_1.expect(result).to.equal(index_1.State.DOWN, `Should return: ${index_1.State.DOWN} , but returned: ${result}`);
     }));
     it('Startup reports UP', () => __awaiter(this, void 0, void 0, function* () {
-        let healthcheck = new index_1.HealthChecker();
+        let healthCheck = new index_1.HealthChecker();
         // tslint:disable-next-line:no-shadowed-variable
         const promise = () => new Promise((resolve, _reject) => {
             resolve();
         });
         let check = new index_1.StartupCheck("check", promise);
-        healthcheck.registerStartupCheck(check);
-        const status = yield healthcheck.getStatus();
+        yield healthCheck.registerStartupCheck(check);
+        const status = yield healthCheck.getStatus();
         const result = status.status;
         chai_1.expect(result).to.equal(index_1.State.UP, `Should return: ${index_1.State.UP} , but returned: ${result}`);
     }));
     it('Startup reports STARTING when first is starting and second is up', () => __awaiter(this, void 0, void 0, function* () {
-        let healthcheck = new index_1.HealthChecker();
-        const Check1 = () => new Promise((_resolve, _reject) => {
-            setTimeout(() => {
-                process.kill(process.pid, 'SIGTERM');
-            }, 1000);
+        let healthCheck = new index_1.HealthChecker();
+        const Check1 = () => new Promise((resolve, _reject) => {
+            setTimeout(resolve, 1000, 'foo');
         });
         let check1 = new index_1.StartupCheck('Check1', Check1);
-        healthcheck.registerStartupCheck(check1);
+        healthCheck.registerStartupCheck(check1);
         const Check2 = () => new Promise((resolve, _reject) => {
             resolve();
         });
         let check2 = new index_1.StartupCheck('Check2', Check2);
-        healthcheck.registerStartupCheck(check2)
-            .then(() => __awaiter(this, void 0, void 0, function* () {
-            const status = yield healthcheck.getStatus();
-            const result = JSON.stringify(status);
-            let expected = "{\"status\":\"STARTING\",\"checks\":[{\"name\":\"Check1\",\"state\":\"STARTING\",\"data\":{\"reason\":\"\"}},{\"name\":\"Check2\",\"state\":\"UP\",\"data\":{\"reason\":\"\"}}]}";
-            chai_1.expect(result).to.equal(expected, `Should return: ${expected}, but returned: ${result}`);
-        }));
+        //don't await as the check should not be resolved or rejected -> resembles an app starting
+        healthCheck.registerStartupCheck(check2);
+        const status = yield healthCheck.getStatus();
+        const result = status.status;
+        const expected = index_1.State.STARTING;
+        chai_1.expect(result).to.equal(expected, `Should return: ${expected}, but returned: ${result}`);
+    }));
+    it('Health reports STARTING with a pending startUp check', () => __awaiter(this, void 0, void 0, function* () {
+        let healthCheck = new index_1.HealthChecker();
+        const Check1 = () => new Promise((resolve, _reject) => {
+            setTimeout(resolve, 100, 'foo');
+        });
+        let startCheck = new index_1.StartupCheck('StartCheck', Check1);
+        healthCheck.registerStartupCheck(startCheck);
+        const status = yield healthCheck.getStatus();
+        const result = status.status;
+        const expected = index_1.State.STARTING;
+        chai_1.expect(result).to.equal(expected, `Should return: ${expected}, but returned: ${result}`);
+    }));
+    it('Liveness reports UP with a pending startUp check that will resolve', () => __awaiter(this, void 0, void 0, function* () {
+        let healthCheck = new index_1.HealthChecker();
+        const Check1 = () => new Promise((resolve, _reject) => {
+            setTimeout(resolve, 100, 'foo');
+        });
+        let startCheck = new index_1.StartupCheck('StartCheck', Check1);
+        healthCheck.registerStartupCheck(startCheck);
+        const status = yield healthCheck.getLivenessStatus();
+        const result = status.status;
+        const expected = index_1.State.UP;
+        chai_1.expect(result).to.equal(expected, `Should return: ${expected}, but returned: ${result}`);
+    }));
+    it('Liveness reports DOWN with a pending startUp check that will fail', () => __awaiter(this, void 0, void 0, function* () {
+        let healthCheck = new index_1.HealthChecker();
+        const Check1 = () => new Promise((_resolve, reject) => {
+            setTimeout(reject, 1000, 'foo');
+        });
+        let startCheck = new index_1.StartupCheck('StartCheck', Check1);
+        healthCheck.registerStartupCheck(startCheck);
+        const status = yield healthCheck.getLivenessStatus();
+        const result = status.status;
+        const expected = index_1.State.DOWN;
+        chai_1.expect(result).to.equal(expected, `Should return: ${expected}, but returned: ${result}`);
+    }));
+    it('Readiness reports UP with a pending startUp check that will resolve', () => __awaiter(this, void 0, void 0, function* () {
+        let healthCheck = new index_1.HealthChecker();
+        const Check1 = () => new Promise((resolve, _reject) => {
+            setTimeout(resolve, 100, 'foo');
+        });
+        let startCheck = new index_1.StartupCheck('StartCheck', Check1);
+        healthCheck.registerStartupCheck(startCheck);
+        const status = yield healthCheck.getReadinessStatus();
+        const result = status.status;
+        const expected = index_1.State.UP;
+        chai_1.expect(result).to.equal(expected, `Should return: ${expected}, but returned: ${result}`);
+    }));
+    it('Readiness reports DOWN with a pending startUp check that will fail', () => __awaiter(this, void 0, void 0, function* () {
+        let healthCheck = new index_1.HealthChecker();
+        const Check1 = () => new Promise((resolve, reject) => {
+            setTimeout(reject, 100, 'foo');
+        });
+        let startCheck = new index_1.StartupCheck('StartCheck', Check1);
+        healthCheck.registerStartupCheck(startCheck);
+        const status = yield healthCheck.getReadinessStatus();
+        const result = status.status;
+        const expected = index_1.State.DOWN;
+        chai_1.expect(result).to.equal(expected, `Should return: ${expected}, but returned: ${result}`);
     }));
     it('Startup reports STARTING when first is up and the second is starting', () => __awaiter(this, void 0, void 0, function* () {
-        let healthcheck = new index_1.HealthChecker();
+        let healthCheck = new index_1.HealthChecker();
         const Check1 = () => new Promise((resolve, _reject) => {
             resolve();
         });
         let check1 = new index_1.StartupCheck('Check1', Check1);
-        healthcheck.registerStartupCheck(check1);
-        const Check2 = () => new Promise((_resolve, _reject) => {
-            setTimeout(() => {
-                process.kill(process.pid, 'SIGTERM');
-            }, 1000);
+        healthCheck.registerStartupCheck(check1);
+        const Check2 = () => new Promise((resolve, _reject) => {
+            setTimeout(resolve, 1000, 'foo');
         });
         let check2 = new index_1.StartupCheck('Check2', Check2);
-        healthcheck.registerStartupCheck(check2)
-            .then(() => __awaiter(this, void 0, void 0, function* () {
-            const status = yield healthcheck.getStatus();
-            const result = status.status;
-            let expected = "{\"status\":\"STARTING\",\"checks\":[{\"name\":\"Check1\",\"state\":\"UP\",\"data\":{\"reason\":\"\"}},{\"name\":\"Check2\",\"state\":\"STARTING\",\"data\":{\"reason\":\"\"}}]}";
-            chai_1.expect(result).to.equal(expected, `Should return: ${expected}, but returned: ${result}`);
-        }));
+        healthCheck.registerStartupCheck(check2); //do not await as its starting but not complete
+        const status = yield healthCheck.getStatus();
+        const result = status.status;
+        const expected = index_1.State.STARTING;
+        chai_1.expect(result).to.equal(expected, `Should return: ${expected}, but returned: ${result}`);
     }));
     it('Startup reports STARTING with returned Promise', () => __awaiter(this, void 0, void 0, function* () {
-        let healthcheck = new index_1.HealthChecker();
+        let healthCheck = new index_1.HealthChecker();
         const promise = () => new Promise((_resolve, _reject) => {
             // tslint:disable-next-line:no-shadowed-variable no-unused-expression
             new Promise((resolve, _reject) => {
-                setTimeout(resolve, 100, 'foo');
+                setTimeout(resolve, 1000, 'foo');
             });
         });
         let check = new index_1.StartupCheck("check", promise);
-        healthcheck.registerStartupCheck(check)
+        healthCheck.registerStartupCheck(check)
             .then(() => __awaiter(this, void 0, void 0, function* () {
-            const status = yield healthcheck.getStatus();
+            const status = yield healthCheck.getStatus();
             const result = status.status;
             chai_1.expect(result).to.equal(index_1.State.STARTING, `Should return: ${index_1.State.STARTING} , but returned: ${result}`);
         }));
     }));
     it('Startup reports STARTING without returned Promise', () => __awaiter(this, void 0, void 0, function* () {
-        let healthcheck = new index_1.HealthChecker();
+        let healthCheck = new index_1.HealthChecker();
         const promise = () => new Promise((_resolve, _reject) => {
             // tslint:disable-next-line:no-unused-expression no-shadowed-variable
             new Promise((resolve, _reject) => {
-                setTimeout(resolve, 100, 'foo');
+                setTimeout(resolve, 1000, 'foo');
             });
         });
         let check = new index_1.StartupCheck("check", promise);
-        healthcheck.registerStartupCheck(check)
+        healthCheck.registerStartupCheck(check)
             .then(() => __awaiter(this, void 0, void 0, function* () {
-            const status = yield healthcheck.getStatus();
+            const status = yield healthCheck.getStatus();
             const result = status.status;
             chai_1.expect(result).to.equal(index_1.State.STARTING, `Should return: ${index_1.State.STARTING} , but returned: ${result}`);
         }));
     }));
     it('Startup reports STARTING when multiple checks are still starting', () => __awaiter(this, void 0, void 0, function* () {
-        let healthcheck = new index_1.HealthChecker();
+        let healthCheck = new index_1.HealthChecker();
         const promise1 = () => new Promise((_resolve, _reject) => {
             // tslint:disable-next-line:no-unused-expression no-shadowed-variable
             new Promise((resolve, _reject) => {
-                setTimeout(resolve, 100, 'foo');
+                setTimeout(resolve, 1000, 'foo');
             });
         });
         let check1 = new index_1.StartupCheck("check", promise1);
@@ -140,87 +193,87 @@ describe('Health Checker test suite', () => {
             });
         });
         let check2 = new index_1.StartupCheck("check", promise2);
-        healthcheck.registerStartupCheck(check1);
-        healthcheck.registerStartupCheck(check2)
+        healthCheck.registerStartupCheck(check1);
+        healthCheck.registerStartupCheck(check2)
             .then(() => __awaiter(this, void 0, void 0, function* () {
-            const status = yield healthcheck.getStatus();
+            const status = yield healthCheck.getStatus();
             const result = status.status;
             chai_1.expect(result).to.equal(index_1.State.STARTING, `Should return: ${index_1.State.STARTING} , but returned: ${result}`);
         }));
     }));
     it('Liveness reports DOWN if startup is DOWN', () => __awaiter(this, void 0, void 0, function* () {
-        let healthcheck = new index_1.HealthChecker();
-        const promiseone = () => new Promise((_resolve, _reject) => {
+        let healthCheck = new index_1.HealthChecker();
+        const promiseOne = () => new Promise((_resolve, _reject) => {
             throw new Error("Liveness Failure");
         });
-        let checkone = new index_1.LivenessCheck("checkone", promiseone);
-        healthcheck.registerLivenessCheck(checkone);
-        const status = yield healthcheck.getLivenessStatus();
+        let checkOne = new index_1.LivenessCheck("checkOne", promiseOne);
+        healthCheck.registerLivenessCheck(checkOne);
+        const status = yield healthCheck.getLivenessStatus();
         const result = status.status;
         chai_1.expect(result).to.equal(index_1.State.DOWN, `Should return: ${index_1.State.DOWN} , but returned: ${result}`);
     }));
     it('Startup is UP and Liveness is DOWN, calling Liveness status should report DOWN', () => __awaiter(this, void 0, void 0, function* () {
-        let healthcheck = new index_1.HealthChecker();
+        let healthCheck = new index_1.HealthChecker();
         const LivenessPromise = () => new Promise((_resolve, _reject) => {
             throw new Error("error");
         });
         const StartupPromise = () => new Promise((resolve, _reject) => {
             resolve();
         });
-        let checkone = new index_1.LivenessCheck("checkone", LivenessPromise);
-        let checktwo = new index_1.StartupCheck("checktwo", StartupPromise);
-        //startup check promise is resolved so liveness should not fallback to get startupstatus
-        healthcheck.registerStartupCheck(checktwo);
-        healthcheck.registerLivenessCheck(checkone);
-        const status = yield healthcheck.getLivenessStatus();
+        let checkOne = new index_1.LivenessCheck("checkOne", LivenessPromise);
+        let checkTwo = new index_1.StartupCheck("checkTwo", StartupPromise);
+        //startup check promise is resolved so liveness should not fallback to get startupStatus
+        yield healthCheck.registerStartupCheck(checkTwo);
+        healthCheck.registerLivenessCheck(checkOne);
+        const status = yield healthCheck.getLivenessStatus();
         const result = status.status;
         chai_1.expect(result).to.equal(index_1.State.DOWN, `Should return: ${index_1.State.DOWN} , but returned: ${result}`);
     }));
     it('Startup is UP and Liveness is DOWN, calling getStatus should report DOWN', () => __awaiter(this, void 0, void 0, function* () {
-        let healthcheck = new index_1.HealthChecker();
+        let healthCheck = new index_1.HealthChecker();
         const LivenessPromise = () => new Promise((_resolve, _reject) => {
             throw new Error("error");
         });
         const StartupPromise = () => new Promise((resolve, _reject) => {
             resolve();
         });
-        let checkone = new index_1.LivenessCheck("checkone", LivenessPromise);
-        let checktwo = new index_1.StartupCheck("checktwo", StartupPromise);
-        healthcheck.registerStartupCheck(checktwo);
-        healthcheck.registerLivenessCheck(checkone);
-        const status = yield healthcheck.getStatus();
+        let checkOne = new index_1.LivenessCheck("checkOne", LivenessPromise);
+        let checkTwo = new index_1.StartupCheck("checkTwo", StartupPromise);
+        yield healthCheck.registerStartupCheck(checkTwo);
+        healthCheck.registerLivenessCheck(checkOne);
+        const status = yield healthCheck.getStatus();
         const result = status.status;
         chai_1.expect(result).to.equal(index_1.State.DOWN, `Should return: ${index_1.State.DOWN} , but returned: ${result}`);
     }));
     it('Startup is UP and Liveness is UP, calling Liveness status should report UP', () => __awaiter(this, void 0, void 0, function* () {
-        let healthcheck = new index_1.HealthChecker();
+        let healthCheck = new index_1.HealthChecker();
         const LivenessPromise = () => new Promise((resolve, _reject) => {
             resolve();
         });
         const StartupPromise = () => new Promise((resolve, _reject) => {
             resolve();
         });
-        let checkone = new index_1.LivenessCheck("checkone", LivenessPromise);
-        let checktwo = new index_1.StartupCheck("checktwo", StartupPromise);
-        healthcheck.registerStartupCheck(checktwo);
-        healthcheck.registerLivenessCheck(checkone);
-        const status = yield healthcheck.getLivenessStatus();
+        let checkOne = new index_1.LivenessCheck("checkOne", LivenessPromise);
+        let checkTwo = new index_1.StartupCheck("checkTwo", StartupPromise);
+        yield healthCheck.registerStartupCheck(checkTwo);
+        healthCheck.registerLivenessCheck(checkOne);
+        const status = yield healthCheck.getLivenessStatus();
         const result = status.status;
         chai_1.expect(result).to.equal(index_1.State.UP, `Should return: ${index_1.State.UP} , but returned: ${result}`);
     }));
     it('Startup is UP and Readiness is DOWN, calling Readiness status should report DOWN', () => __awaiter(this, void 0, void 0, function* () {
-        let healthcheck = new index_1.HealthChecker();
+        let healthCheck = new index_1.HealthChecker();
         const ReadinessPromise = () => new Promise((_resolve, _reject) => {
             throw new Error("error");
         });
         const StartupPromise = () => new Promise((resolve, _reject) => {
             resolve();
         });
-        let checkone = new index_1.ReadinessCheck("checkone", ReadinessPromise);
-        let checktwo = new index_1.StartupCheck("checktwo", StartupPromise);
-        healthcheck.registerStartupCheck(checktwo);
-        healthcheck.registerReadinessCheck(checkone);
-        const status = yield healthcheck.getReadinessStatus();
+        let checkOne = new index_1.ReadinessCheck("checkOne", ReadinessPromise);
+        let checkTwo = new index_1.StartupCheck("checkTwo", StartupPromise);
+        yield healthCheck.registerStartupCheck(checkTwo);
+        healthCheck.registerReadinessCheck(checkOne);
+        const status = yield healthCheck.getReadinessStatus();
         const result = status.status;
         chai_1.expect(result).to.equal(index_1.State.DOWN, `Should return: ${index_1.State.DOWN} , but returned: ${result}`);
     }));
@@ -234,7 +287,7 @@ describe('Health Checker test suite', () => {
         });
         let checkone = new index_1.ReadinessCheck("checkone", ReadinessPromise);
         let checktwo = new index_1.StartupCheck("checktwo", StartupPromise);
-        healthcheck.registerStartupCheck(checktwo);
+        yield healthcheck.registerStartupCheck(checktwo);
         healthcheck.registerReadinessCheck(checkone);
         const status = yield healthcheck.getStatus();
         const result = status.status;
@@ -259,7 +312,7 @@ describe('Health Checker test suite', () => {
         let check = new index_1.StartupCheck("check", StartupPromise);
         healthcheck.registerStartupCheck(check);
         yield healthcheck.getStatus();
-        let result = yield healthcheck.getStartUpComplete();
+        let result = healthcheck.getStartUpComplete();
         chai_1.expect(result).to.equal(false, `Should return that startupComplete is false, but returned ${result}`);
     }));
     it('Startup is DOWN and should return DOWN with a liveness check', () => __awaiter(this, void 0, void 0, function* () {
@@ -272,7 +325,7 @@ describe('Health Checker test suite', () => {
         });
         let check = new index_1.StartupCheck("check", StartupPromise);
         let check2 = new index_1.ReadinessCheck("check2", LivenessPromise);
-        healthcheck.registerStartupCheck(check);
+        yield healthcheck.registerStartupCheck(check);
         healthcheck.registerLivenessCheck(check2);
         let status = yield healthcheck.getLivenessStatus();
         let result = status.status;
