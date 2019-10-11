@@ -914,7 +914,7 @@ describe('Health Checker test suite', () => {
     healthcheck.registerLivenessCheck(check)
     const status = await healthcheck.getLivenessStatus();
     
-        let expected = 'PingCheck HEAD:not-an-address.com:80/'
+    let expected = 'PingCheck HEAD:not-an-address.com:80/'
     const statusVal = status.status
     const checksState = status.checks[0].state
     const checkName = status.checks[0].name
