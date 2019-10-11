@@ -414,9 +414,13 @@ describe('Health Checker test suite', () => {
         let check = new index_1.PingCheck("not-an-address.com");
         healthcheck.registerLivenessCheck(check);
         const status = yield healthcheck.getStatus();
-        const result = JSON.stringify(status);
-        let expected = "{\"status\":\"DOWN\",\"checks\":[{\"name\":\"PingCheck HEAD:not-an-address.com:80/\",\"state\":\"DOWN\",\"data\":{\"reason\":\"Failed to ping HEAD:not-an-address.com:80/: getaddrinfo ENOTFOUND not-an-address.com not-an-address.com:80\"}}]}";
-        chai_1.expect(result).to.equal(expected, `Should return: ${expected}, but returned: ${result}`);
+        let expected = 'PingCheck HEAD:not-an-address.com:80/';
+        const statusVal = status.status;
+        const checksState = status.checks[0].state;
+        const checkName = status.checks[0].name;
+        chai_1.expect(statusVal).to.equal(index_1.State.DOWN, `Should return: ${index_1.State.DOWN}, but returned: ${statusVal}`);
+        chai_1.expect(checksState).to.equal(index_1.State.DOWN, `Should return: ${index_1.State.DOWN}, but returned: ${checksState}`);
+        chai_1.expect(checkName).to.equal(expected, `Should return: ${expected}, but returned: ${checkName}`);
     }));
     it('Health reports DOWN on second invocation of a liveness check', () => __awaiter(this, void 0, void 0, function* () {
         let healthcheck = new index_1.HealthChecker();
@@ -575,9 +579,13 @@ describe('Health Checker test suite', () => {
         let check = new index_1.PingCheck("not-an-address.com");
         healthcheck.registerReadinessCheck(check);
         const status = yield healthcheck.getReadinessStatus();
-        const result = JSON.stringify(status);
-        let expected = "{\"status\":\"DOWN\",\"checks\":[{\"name\":\"PingCheck HEAD:not-an-address.com:80/\",\"state\":\"DOWN\",\"data\":{\"reason\":\"Failed to ping HEAD:not-an-address.com:80/: getaddrinfo ENOTFOUND not-an-address.com not-an-address.com:80\"}}]}";
-        chai_1.expect(result).to.equal(expected, `Should return: ${expected}, but returned: ${result}`);
+        let expected = 'PingCheck HEAD:not-an-address.com:80/';
+        const statusVal = status.status;
+        const checksState = status.checks[0].state;
+        const checkName = status.checks[0].name;
+        chai_1.expect(statusVal).to.equal(index_1.State.DOWN, `Should return: ${index_1.State.DOWN}, but returned: ${statusVal}`);
+        chai_1.expect(checksState).to.equal(index_1.State.DOWN, `Should return: ${index_1.State.DOWN}, but returned: ${checksState}`);
+        chai_1.expect(checkName).to.equal(expected, `Should return: ${expected}, but returned: ${checkName}`);
     }));
     it('Readiness reports DOWN and check result with one passed and one failed registered checks', () => __awaiter(this, void 0, void 0, function* () {
         let healthcheck = new index_1.HealthChecker();
@@ -719,9 +727,13 @@ describe('Health Checker test suite', () => {
         let check = new index_1.PingCheck("not-an-address.com");
         healthcheck.registerLivenessCheck(check);
         const status = yield healthcheck.getLivenessStatus();
-        const result = JSON.stringify(status);
-        let expected = "{\"status\":\"DOWN\",\"checks\":[{\"name\":\"PingCheck HEAD:not-an-address.com:80/\",\"state\":\"DOWN\",\"data\":{\"reason\":\"Failed to ping HEAD:not-an-address.com:80/: getaddrinfo ENOTFOUND not-an-address.com not-an-address.com:80\"}}]}";
-        chai_1.expect(result).to.equal(expected, `Should return: ${expected}, but returned: ${result}`);
+        let expected = 'PingCheck HEAD:not-an-address.com:80/';
+        const statusVal = status.status;
+        const checksState = status.checks[0].state;
+        const checkName = status.checks[0].name;
+        chai_1.expect(statusVal).to.equal(index_1.State.DOWN, `Should return: ${index_1.State.DOWN}, but returned: ${statusVal}`);
+        chai_1.expect(checksState).to.equal(index_1.State.DOWN, `Should return: ${index_1.State.DOWN}, but returned: ${checksState}`);
+        chai_1.expect(checkName).to.equal(expected, `Should return: ${expected}, but returned: ${checkName}`);
     }));
     it('Liveness reports DOWN and check result with one passed and one failed registered checks', () => __awaiter(this, void 0, void 0, function* () {
         let healthcheck = new index_1.HealthChecker();
