@@ -284,9 +284,13 @@ class Plugin {
           this.statusReason = "";
           return Promise.resolve();
         })
-        .catch((error) => {
+        .catch((err) => {
           this.status = failure;
-          this.statusReason = error.message;
+          try {
+            this.statusReason = String(err.message || err);
+          } catch(err) {
+            this.statusReason = String();
+          }
           return Promise.resolve();
         });
     }

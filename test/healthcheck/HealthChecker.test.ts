@@ -16,6 +16,7 @@
 
 import { should, expect } from 'chai';
 import { HealthChecker, State, Plugin, StartupCheck, ReadinessCheck, LivenessCheck, ShutdownCheck, PingCheck } from '../../index';
+import { HealthStatus } from '../../src/healthcheck/HealthChecker';
 should();
 
 describe('Health Checker test suite', () => {
@@ -1145,4 +1146,51 @@ describe('Health Checker test suite', () => {
     const expected = "{\"status\":\"STOPPING\",\"checks\":[{\"name\":\"checkone\",\"state\":\"STOPPED\",\"data\":{\"reason\":\"\"}},{\"name\":\"checktwo\",\"state\":\"STOPPING\",\"data\":{\"reason\":\"\"}}]}"
     expect(result).to.equal(expected, `Should return: ${expected}, but returned: ${result}`);
   });
+});
+
+describe('Should convert any promise reject to return an error message as a string' , () => {
+  {
+    class foo {
+      get message() {
+        return "bar"
+      }
+    }
+    
+    // array of errors and their expected return values when passed to promise reject
+    
+    [
+      [new Error("Readiness Failure"), "Readiness Failure"],
+      [null, ""],
+      [undefined, ""],
+      [1, "1"],
+      [new Error(), "Error"],
+      [new foo(), "bar"]
+    ].forEach(([err,str]) => {
+
+      it(`When err is ${err} should return ${str}`, async() => {
+        
+        let healthcheck = new HealthChecker();
+        const readinessPromise = () => new Promise<void>((resolve, reject) => {
+          reject(err);
+        });
+    
+        let check = new ReadinessCheck("readinessCheck", readinessPromise);
+        healthcheck.registerReadinessCheck(check);
+        let status = await healthcheck.getReadinessStatus();
+        const result = JSON.stringify(status);
+    
+        let expected = { 
+          "status":"DOWN",
+          "checks":
+          [{ 
+            "name":"readinessCheck",
+            "state":"DOWN",
+            "data": { 
+              "reason": str
+            }
+          }] 
+        };
+        expect(result).to.equal(JSON.stringify(expected), `Should return: ${expected}, but returned: ${result}`);
+      });
+  })};
 });
