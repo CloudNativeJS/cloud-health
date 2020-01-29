@@ -23,7 +23,7 @@
   "homepage": "http://CloudNativeJS.io/",
   "devDependencies": {
     "@types/chai": "^4.2.0",
-    "@types/mocha": "^5.2.6",
+    "@types/mocha": "^7.0.0",
     "@types/node": "^13.1.6",
     "chai": "^4.1.2",
     "coveralls": "^3.0.7",
