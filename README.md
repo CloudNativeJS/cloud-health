@@ -1,4 +1,5 @@
-# Cloud Health
+# The `cloud-health` module is deprecated.
+
 <p align=center>
 <a href='http://CloudNativeJS.io/'><img src='https://img.shields.io/badge/homepage-CloudNativeJS-blue.svg'></a>
 <a href='https://www.npmjs.org/package/@cloudnative/health'><img src='https://img.shields.io/npm/v/@cloudnative/health' alt='npm'/></a>
